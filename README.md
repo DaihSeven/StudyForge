@@ -34,9 +34,9 @@ certificados e acompanhamento de progresso.
   como conceito de primeira classe.
 - **Novos formatos de entrada não devem exigir reescrever o núcleo de quizzes.**
   Importação de material é um módulo plugável, separado do domínio de quiz.
-- **Nada de complexidade prematura.** Começamos como uma aplicação modular simples
-  (monólito bem separado), sem microserviços ou infraestrutura desnecessária nesta
-  fase.
+- **Nada de complexidade prematura.** O backend começa como uma aplicação modular,
+  organizada dentro de um monorepo Nx, sem microserviços, filas ou múltiplos bancos
+  nesta fase.
 - **Revisão humana é obrigatória.** Nenhum conteúdo gerado automaticamente (heurística
   ou IA) é publicado sem passar pela revisão explícita do mentor.
 - **Multi-tenancy desde o início.** Todo recurso pertencente a uma organização
