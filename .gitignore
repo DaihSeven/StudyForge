@@ -22,3 +22,16 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+
+
+
+.nx/cache
+.nx/workspace-data
+.nx/migrate-runs
+
+# Next.js
+.next
+out
+
+# Prisma Client gerado (Marco 2.4+)
+/generated
