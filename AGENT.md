@@ -10,18 +10,21 @@ específicas registradas no `CLAUDE.md` e no `README.md` prevalecem.
 
 ## 1. Estado atual do repositório
 
-O projeto está na **Etapa 1 — Fundação documental**. Não existe ainda:
+O projeto está na **Etapa 2 — Primeiro artefato**, com o **Marco 2.1**
+(infraestrutura do monorepo) concluído. Existe hoje:
 
-- monorepo Nx inicializado;
-- aplicações (`api`, `web`);
-- libs de domínio/aplicação/infra;
-- banco de dados ou schema Prisma;
-- dependências de runtime instaladas.
+- monorepo Nx 23 inicializado;
+- `apps/api` (NestJS 11) e `apps/web` (Next.js 16, App Router), ambos ainda com
+  o scaffold padrão gerado pelo Nx;
+- Prisma 7 configurado (`prisma/schema.prisma` + `prisma.config.ts`), provider
+  PostgreSQL, sem models e sem migrations;
+- lint, testes (Jest) e build funcionando para `api` e `web`.
 
-Comandos de setup, build, lint e teste **ainda não se aplicam** e serão
-adicionados a este arquivo assim que o monorepo Nx for criado (Etapa 2). Até lá,
-qualquer agente que for solicitado a "rodar o projeto" deve informar que o
-projeto ainda não tem código executável.
+Não existe ainda:
+
+- libs de domínio/aplicação/infra (nem `shared/contracts`);
+- nenhum model, entidade ou regra de negócio do StudyForge;
+- banco de dados real conectado (`DATABASE_URL` só em `.env.example`).
 
 ## 2. Como este repositório evolui
 
@@ -40,13 +43,35 @@ instrução explícita do responsável do projeto.
 
 ## 3. Comandos
 
-O projeto ainda não possui comandos executáveis definidos. Eles serão
-documentados nesta seção na Etapa 2, após a criação do monorepo Nx — cobrindo ao
-menos setup, build, lint, testes, e execução de `api` (NestJS) e `web`
-(Next.js).
+Não há scripts em `package.json`; todos os comandos passam pelo Nx (`npx nx`).
 
-Este arquivo deve ser atualizado assim que os comandos reais existirem — não
-inventar comandos hipotéticos antes disso.
+```bash
+# Setup (instalação reprodutível a partir do lockfile)
+npm ci
+
+# Checks em todos os projetos
+npx nx run-many -t lint test build
+
+# Por projeto
+npx nx lint <api|web>
+npx nx test <api|web>
+npx nx build <api|web>
+
+# Execução local
+PORT=3333 npx nx serve api   # http://localhost:3333/api (sem PORT, usa 3000)
+npx nx dev web               # http://localhost:3000
+
+# Prisma (não requer banco para validar o schema)
+npx prisma validate
+```
+
+Os install scripts de dependências nativas (Prisma, SWC, Nx, sharp etc.) estão
+aprovados no campo `allowScripts` do `package.json`. Novas dependências com
+install scripts precisam ser aprovadas explicitamente
+(`npm install-scripts approve <pkg>`).
+
+Este arquivo deve ser atualizado sempre que novos comandos reais existirem — não
+inventar comandos hipotéticos.
 
 ## 4. Convenções de commit e mudanças
 

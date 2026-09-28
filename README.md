@@ -182,10 +182,10 @@ estudante em outra) sem ambiguidade no modelo de dados.
 
 ## 8. Roadmap por etapas
 
-**Etapa 1 — Fundação documental** *(atual)*
+**Etapa 1 — Fundação documental** *(concluída)*
 `README.md`, `CLAUDE.md`, `AGENT.md` revisados antes de qualquer código.
 
-**Etapa 2 — Primeiro artefato**
+**Etapa 2 — Primeiro artefato** *(atual — Marco 2.1 concluído)*
 Criação do monorepo Nx e implementação do menor fluxo que valida a arquitetura de
 ponta a ponta: texto estruturado → `DraftQuestion` → persistência → consulta.
 
