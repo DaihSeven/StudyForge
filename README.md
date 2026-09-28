@@ -3,7 +3,7 @@
 > Plataforma de estudos para criação, edição, publicação e execução de simulados,
 > construída a partir de material fornecido pelo mentor em formatos variados.
 
-Status: **Etapa 1 — Fundação documental.** Nenhum código de aplicação foi criado ainda.
+Status: **Etapa 2 — Primeiro artefato.** Marco 2.1 concluído.
 
 ---
 

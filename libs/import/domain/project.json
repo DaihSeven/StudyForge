@@ -1,0 +1,26 @@
+{
+  "name": "import-domain",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/import/domain/src",
+  "projectType": "library",
+  "tags": [
+    "scope:import",
+    "type:domain"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/import/domain",
+        "main": "libs/import/domain/src/index.ts",
+        "tsConfig": "libs/import/domain/tsconfig.lib.json",
+        "assets": [
+          "libs/import/domain/*.md"
+        ]
+      }
+    }
+  }
+}
