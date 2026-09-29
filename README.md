@@ -3,7 +3,7 @@
 > Plataforma de estudos para criação, edição, publicação e execução de simulados,
 > construída a partir de material fornecido pelo mentor em formatos variados.
 
-Status: **Etapa 2 — Primeiro artefato.** Marco 2.1 concluído.
+Status: **Etapa 2 — Primeiro artefato.** Marcos 2.1 (infraestrutura) e 2.2 (domínio mínimo) concluídos.
 
 ---
 
@@ -185,9 +185,12 @@ estudante em outra) sem ambiguidade no modelo de dados.
 **Etapa 1 — Fundação documental** *(concluída)*
 `README.md`, `CLAUDE.md`, `AGENT.md` revisados antes de qualquer código.
 
-**Etapa 2 — Primeiro artefato** *(atual — Marco 2.1 concluído)*
+**Etapa 2 — Primeiro artefato** *(atual)*
 Criação do monorepo Nx e implementação do menor fluxo que valida a arquitetura de
 ponta a ponta: texto estruturado → `DraftQuestion` → persistência → consulta.
+
+- Marco 2.1 — infraestrutura do monorepo (Nx, `api`, `web`, Prisma) *(concluído)*
+- Marco 2.2 — domínio mínimo (`shared/domain` e `import/domain`) *(concluído)*
 
 **Etapa 3 — MVP 1**
 Evolução para: importação/extração automatizada (IA), revisão do mentor, criação e

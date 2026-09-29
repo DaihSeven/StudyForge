@@ -11,20 +11,27 @@ específicas registradas no `CLAUDE.md` e no `README.md` prevalecem.
 ## 1. Estado atual do repositório
 
 O projeto está na **Etapa 2 — Primeiro artefato**, com o **Marco 2.1**
-(infraestrutura do monorepo) concluído. Existe hoje:
+(infraestrutura do monorepo) e o **Marco 2.2** (domínio mínimo) concluídos.
+Existe hoje:
 
 - monorepo Nx 23 inicializado;
 - `apps/api` (NestJS 11) e `apps/web` (Next.js 16, App Router), ambos ainda com
-  o scaffold padrão gerado pelo Nx;
+  o scaffold padrão gerado pelo Nx e sem acesso direto a nenhuma lib;
+- `libs/shared/domain` (`shared-domain`, tags `scope:shared`, `type:domain`):
+  `DomainError`, `OrganizationId`, `Alternative`, `QuestionType` e as regras
+  estruturais por tipo (`QUESTION_TYPE_RULES`);
+- `libs/import/domain` (`import-domain`, tags `scope:import`, `type:domain`):
+  `DraftQuestion`, que depende apenas de `shared-domain`;
 - Prisma 7 configurado (`prisma/schema.prisma` + `prisma.config.ts`), provider
   PostgreSQL, sem models e sem migrations;
-- lint, testes (Jest) e build funcionando para `api` e `web`.
+- lint, testes (Jest) e build funcionando para todos os projetos.
 
 Não existe ainda:
 
-- libs de domínio/aplicação/infra (nem `shared/contracts`);
-- nenhum model, entidade ou regra de negócio do StudyForge;
-- banco de dados real conectado (`DATABASE_URL` só em `.env.example`).
+- `libs/quiz/domain`, libs de aplicação/infra e `shared/contracts`;
+- nenhum use case, repositório, controller ou endpoint do StudyForge;
+- nenhum model Prisma nem banco de dados real conectado (`DATABASE_URL` só em
+  `.env.example`).
 
 ## 2. Como este repositório evolui
 
@@ -52,10 +59,17 @@ npm ci
 # Checks em todos os projetos
 npx nx run-many -t lint test build
 
-# Por projeto
-npx nx lint <api|web>
-npx nx test <api|web>
-npx nx build <api|web>
+# Por projeto (<projeto>: api, web, shared-domain, import-domain)
+npx nx lint <projeto>
+npx nx test <projeto>
+npx nx build <projeto>     # nas libs de domínio, compila com `lib: es2022` e `types: []`, sem tipos de Node/DOM
+
+# Testes de domínio (sem banco)
+npx nx test shared-domain
+npx nx test import-domain
+
+# Grafo de dependências entre projetos
+npx nx graph
 
 # Execução local
 PORT=3333 npx nx serve api   # http://localhost:3333/api (sem PORT, usa 3000)

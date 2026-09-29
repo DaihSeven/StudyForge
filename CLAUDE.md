@@ -30,6 +30,16 @@ silenciosamente qual delas quebrar.
 2. **`domain` não importa nada.** Nenhuma lib `*/domain` pode depender de NestJS,
    Prisma, HTTP, Zod, ou qualquer outra lib de infraestrutura. `domain` é
    TypeScript puro.
+
+   > **Observação:** a garantia de que uma lib `type:domain` não usa APIs do
+   > Node depende de duas configurações que precisam existir juntas: (a)
+   > `types: []` no `tsconfig.lib.json` da lib, e (b) o bloco `...domainLayer`
+   > importado no `eslint.config.mjs` da lib (definido em `eslint.config.mjs`
+   > da raiz). Nenhuma tag do Nx aplica isso automaticamente. Toda nova lib
+   > `type:domain` (incluindo o futuro `quiz/domain`) deve incluir
+   > explicitamente `...domainLayer` no seu `eslint.config.mjs` — esquecer isso
+   > faz a proteção contra módulos nativos do Node depender só do tsconfig, que
+   > é mais frágil (ver commit `7619be5` para o histórico completo dessa descoberta).
 3. **`application` depende do `domain` do próprio contexto e pode depender de
    `shared/domain` e `shared/contracts`** quando precisar atravessar fronteiras
    (ex.: `quiz/application` recebendo um `DraftQuestionDto` vindo de `import`, via
