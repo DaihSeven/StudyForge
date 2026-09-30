@@ -64,6 +64,16 @@ export default [
                         "^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$"
                     ],
                     depConstraints: [
+                        // Camada contracts: só contracts e domain (tipos comuns)
+                        {
+                            sourceTag: "type:contracts",
+                            onlyDependOnLibsWithTags: ["type:contracts", "type:domain"]
+                        },
+                        // Camada application: application, domain e contracts (nunca infra)
+                        {
+                            sourceTag: "type:application",
+                            onlyDependOnLibsWithTags: ["type:application", "type:domain", "type:contracts"]
+                        },
                         // Camada domain: só depende de domain e não importa pacotes externos
                         {
                             sourceTag: "type:domain",
@@ -74,6 +84,11 @@ export default [
                         {
                             allSourceTags: ["scope:shared", "type:domain"],
                             onlyDependOnLibsWithTags: []
+                        },
+                        // shared: só depende de shared (nunca import/quiz)
+                        {
+                            sourceTag: "scope:shared",
+                            onlyDependOnLibsWithTags: ["scope:shared"]
                         },
                         // import: só import ou shared (nunca quiz)
                         {

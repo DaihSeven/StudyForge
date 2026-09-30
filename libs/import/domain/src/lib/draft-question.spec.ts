@@ -1,6 +1,7 @@
-import { Alternative, AlternativeLetter, OrganizationId, QuestionType } from '@studyforge/shared/domain';
+import { Alternative, AlternativeLetter, EntityId, OrganizationId, QuestionType } from '@studyforge/shared/domain';
 import { DraftQuestion, DraftQuestionProps } from './draft-question';
 
+const id = EntityId.create('draft-1');
 const organizationId = OrganizationId.create('org-1');
 
 /** Monta alternativas a partir das letras; as letras em `correct` são as corretas. */
@@ -16,6 +17,7 @@ function alternatives(letters: string, correct: string): Alternative[] {
 
 function create(type: QuestionType, letters: string, correct: string, overrides: Partial<DraftQuestionProps> = {}) {
   return DraftQuestion.create({
+    id,
     organizationId,
     type,
     statement: 'Enunciado',
@@ -40,6 +42,7 @@ describe('DraftQuestion', () => {
     it('accepts 4 alternatives A–D with exactly 1 correct', () => {
       const draft = create(type, 'ABCD', 'B');
 
+      expect(draft.id).toBe(id);
       expect(draft.organizationId).toBe(organizationId);
       expect(draft.type).toBe(type);
       expect(draft.statement).toBe('Enunciado');
@@ -116,6 +119,30 @@ describe('DraftQuestion', () => {
     );
 
     expect(error).toMatchObject({ code: 'INVALID_ORGANIZATION_ID' });
+  });
+
+  it('requires an id', () => {
+    const error = errorOf(() =>
+      create(QuestionType.SINGLE_CHOICE, 'ABCD', 'A', { id: undefined as unknown as EntityId }),
+    );
+
+    expect(error).toMatchObject({ code: 'INVALID_ENTITY_ID' });
+  });
+
+  it.each(['', '   '])('rejects an empty statement ("%s")', (statement) => {
+    expect(errorOf(() => create(QuestionType.SINGLE_CHOICE, 'ABCD', 'A', { statement }))).toMatchObject({
+      code: 'EMPTY_STATEMENT',
+    });
+  });
+
+  it.each(['', '   '])('rejects an alternative with empty text ("%s")', (text) => {
+    const withEmptyText = [...alternatives('ABC', 'A'), Alternative.create({ letter: 'D', text, isCorrect: false })];
+
+    expect(
+      errorOf(() => create(QuestionType.SINGLE_CHOICE, 'ABCD', 'A', { alternatives: withEmptyText })),
+    ).toMatchObject({
+      code: 'EMPTY_ALTERNATIVE_TEXT',
+    });
   });
 
   it('rejects a question type other than SINGLE_CHOICE or MULTIPLE_CHOICE', () => {

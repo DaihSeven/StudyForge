@@ -23,6 +23,12 @@
       ],
       "@studyforge/import/domain": [
         "./libs/import/domain/src/index.ts"
+      ],
+      "@studyforge/shared/contracts": [
+        "./libs/shared/contracts/src/index.ts"
+      ],
+      "@studyforge/import/application": [
+        "./libs/import/application/src/index.ts"
       ]
     }
   },

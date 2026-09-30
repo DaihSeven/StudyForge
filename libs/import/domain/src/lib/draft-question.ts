@@ -1,6 +1,8 @@
 import {
   Alternative,
   DomainError,
+  EntityId,
+  InvalidEntityIdError,
   InvalidOrganizationIdError,
   isQuestionType,
   OrganizationId,
@@ -12,7 +14,9 @@ export type InvalidDraftQuestionCode =
   | 'INVALID_QUESTION_TYPE'
   | 'INVALID_ALTERNATIVE_COUNT'
   | 'INVALID_ALTERNATIVE_LETTERS'
-  | 'INVALID_CORRECT_COUNT';
+  | 'INVALID_CORRECT_COUNT'
+  | 'EMPTY_STATEMENT'
+  | 'EMPTY_ALTERNATIVE_TEXT';
 
 export class InvalidDraftQuestionError extends DomainError<InvalidDraftQuestionCode> {
   constructor(code: InvalidDraftQuestionCode, message: string) {
@@ -21,6 +25,7 @@ export class InvalidDraftQuestionError extends DomainError<InvalidDraftQuestionC
 }
 
 export interface DraftQuestionProps {
+  readonly id: EntityId;
   readonly organizationId: OrganizationId;
   readonly type: QuestionType;
   readonly statement: string;
@@ -30,9 +35,11 @@ export interface DraftQuestionProps {
 /**
  * Questão extraída de material importado, aguardando revisão do mentor.
  * Só existe em estado estruturalmente válido para o seu `QuestionType`.
+ * O `id` vem de fora (gerado por um port fora do domínio, ou lido da persistência).
  */
 export class DraftQuestion {
   private constructor(
+    readonly id: EntityId,
     readonly organizationId: OrganizationId,
     readonly type: QuestionType,
     readonly statement: string,
@@ -40,6 +47,9 @@ export class DraftQuestion {
   ) {}
 
   static create(props: DraftQuestionProps): DraftQuestion {
+    if (!(props.id instanceof EntityId)) {
+      throw new InvalidEntityIdError();
+    }
     if (!(props.organizationId instanceof OrganizationId)) {
       throw new InvalidOrganizationIdError();
     }
@@ -73,6 +83,18 @@ export class DraftQuestion {
       );
     }
 
-    return Object.freeze(new DraftQuestion(props.organizationId, props.type, props.statement, Object.freeze(sorted)));
+    if (typeof props.statement !== 'string' || props.statement.trim() === '') {
+      throw new InvalidDraftQuestionError('EMPTY_STATEMENT', 'Statement cannot be empty.');
+    }
+
+    const emptyText = sorted.find((alternative) => alternative.text.trim() === '');
+    if (emptyText) {
+      throw new InvalidDraftQuestionError(
+        'EMPTY_ALTERNATIVE_TEXT',
+        `Alternative ${emptyText.letter} text cannot be empty.`,
+      );
+    }
+
+    return Object.freeze(new DraftQuestion(props.id, props.organizationId, props.type, props.statement, Object.freeze(sorted)));
   }
 }

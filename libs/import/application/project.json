@@ -1,0 +1,27 @@
+{
+  "name": "import-application",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/import/application/src",
+  "projectType": "library",
+  "tags": [
+    "scope:import",
+    "type:application"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/import/application",
+        "tsConfig": "libs/import/application/tsconfig.lib.json",
+        "packageJson": "libs/import/application/package.json",
+        "main": "libs/import/application/src/index.ts",
+        "assets": [
+          "libs/import/application/*.md"
+        ]
+      }
+    }
+  }
+}
