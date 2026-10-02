@@ -5,10 +5,17 @@
       "cache": true
     },
     "test": {
-      "cache": true
+      "cache": true,
+      "dependsOn": [
+        "prisma-generate",
+        "^prisma-generate"
+      ]
     },
     "lint": {
-      "cache": true
+      "cache": true,
+      "dependsOn": [
+        "prisma-generate"
+      ]
     },
     "@nx/js:tsc": {
       "cache": true,
@@ -64,5 +71,6 @@
         "linter": "eslint"
       }
     }
-  }
+  },
+  "analytics": true
 }

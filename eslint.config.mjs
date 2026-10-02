@@ -74,6 +74,11 @@ export default [
                             sourceTag: "type:application",
                             onlyDependOnLibsWithTags: ["type:application", "type:domain", "type:contracts"]
                         },
+                        // Camada infra: implementa ports de application (dependência infra → application)
+                        {
+                            sourceTag: "type:infra",
+                            onlyDependOnLibsWithTags: ["type:infra", "type:application", "type:domain", "type:contracts"]
+                        },
                         // Camada domain: só depende de domain e não importa pacotes externos
                         {
                             sourceTag: "type:domain",

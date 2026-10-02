@@ -1,0 +1,38 @@
+{
+  "name": "import-infra",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/import/infra/src",
+  "projectType": "library",
+  "tags": [
+    "scope:import",
+    "type:infra"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/import/infra",
+        "tsConfig": "libs/import/infra/tsconfig.lib.json",
+        "packageJson": "libs/import/infra/package.json",
+        "main": "libs/import/infra/src/index.ts",
+        "assets": [
+          "libs/import/infra/*.md"
+        ]
+      }
+    },
+    "test-integration": {
+      "executor": "@nx/jest:jest",
+      "cache": false,
+      "dependsOn": [
+        "^prisma-generate"
+      ],
+      "options": {
+        "jestConfig": "libs/import/infra/jest.integration.config.cts",
+        "runInBand": true
+      }
+    }
+  }
+}

@@ -3,6 +3,45 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../libs/shared/prisma/src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+// Espelham `QuestionType` e `AlternativeLetter` de shared/domain.
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+}
+
+enum AlternativeLetter {
+  A
+  B
+  C
+  D
+  E
+}
+
+// organizationId sem FK por enquanto: o model Organization nasce com o contexto identity.
+model DraftQuestion {
+  id             String        @id
+  organizationId String
+  type           QuestionType
+  statement      String
+  alternatives   Alternative[]
+  createdAt      DateTime      @default(now())
+
+  @@index([organizationId])
+  @@map("draft_questions")
+}
+
+model Alternative {
+  draftQuestionId String
+  letter          AlternativeLetter
+  text            String
+  isCorrect       Boolean
+  draftQuestion   DraftQuestion     @relation(fields: [draftQuestionId], references: [id], onDelete: Cascade)
+
+  @@id([draftQuestionId, letter])
+  @@map("alternatives")
 }

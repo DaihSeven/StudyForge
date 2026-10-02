@@ -33,5 +33,5 @@ lerna-debug.log*
 .next
 out
 
-# Prisma Client gerado (Marco 2.4+)
-/generated
+# Prisma Client gerado (prisma generate)
+/libs/shared/prisma/src/generated

@@ -1,0 +1,44 @@
+{
+  "name": "shared-prisma",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/prisma/src",
+  "projectType": "library",
+  "tags": [
+    "scope:shared",
+    "type:infra"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/shared/prisma",
+        "tsConfig": "libs/shared/prisma/tsconfig.lib.json",
+        "packageJson": "libs/shared/prisma/package.json",
+        "main": "libs/shared/prisma/src/index.ts",
+        "assets": [
+          "libs/shared/prisma/*.md"
+        ]
+      },
+      "dependsOn": [
+        "prisma-generate"
+      ]
+    },
+    "prisma-generate": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/prisma/schema.prisma"
+      ],
+      "outputs": [
+        "{projectRoot}/src/generated"
+      ],
+      "options": {
+        "command": "npx prisma generate",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

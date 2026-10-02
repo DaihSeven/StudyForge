@@ -29,6 +29,12 @@
       ],
       "@studyforge/import/application": [
         "./libs/import/application/src/index.ts"
+      ],
+      "@studyforge/shared/prisma": [
+        "./libs/shared/prisma/src/index.ts"
+      ],
+      "@studyforge/import/infra": [
+        "./libs/import/infra/src/index.ts"
       ]
     }
   },
