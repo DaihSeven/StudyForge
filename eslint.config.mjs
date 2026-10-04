@@ -100,11 +100,12 @@ export default [
                             sourceTag: "scope:import",
                             onlyDependOnLibsWithTags: ["scope:import", "scope:shared"]
                         },
-                        // apps: sem acesso direto a libs neste estágio
+                        // api: compõe os contextos (import) e o kernel compartilhado
                         {
                             sourceTag: "scope:api",
-                            onlyDependOnLibsWithTags: []
+                            onlyDependOnLibsWithTags: ["scope:shared", "scope:import"]
                         },
+                        // web: sem acesso direto a libs neste estágio
                         {
                             sourceTag: "scope:web",
                             onlyDependOnLibsWithTags: []
