@@ -1,0 +1,27 @@
+{
+  "name": "identity-infra",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/identity/infra/src",
+  "projectType": "library",
+  "tags": [
+    "scope:identity",
+    "type:infra"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/identity/infra",
+        "tsConfig": "libs/identity/infra/tsconfig.lib.json",
+        "packageJson": "libs/identity/infra/package.json",
+        "main": "libs/identity/infra/src/index.ts",
+        "assets": [
+          "libs/identity/infra/*.md"
+        ]
+      }
+    }
+  }
+}

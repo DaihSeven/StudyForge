@@ -133,50 +133,75 @@ Depois de rodar os 3 geradores, execute em cada lib:
 
 ### 1. Permitir testes vazios em application (provisório)
 
-`libs/<context>/application/jest.config.cts`:
+`libs/<context>/application/jest.config.cts`: acrescente `passWithNoTests: true` ao `module.exports`
+gerado (sem isso, `nx test` falha com `No tests found` enquanto a lib não tiver specs):
 
 ```javascript
-export default {
+module.exports = {
   displayName: '<context>-application',
   preset: '../../../jest.preset.js',
   testEnvironment: 'node',
-  transform: { '^.+\\.[tj]sx?$': [...] },
   passWithNoTests: true, // ← Provisório: remover quando houver specs reais
+  transform: {
+    '^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }]
+  },
+  moduleFileExtensions: ['ts', 'js', 'html'],
+  coverageDirectory: '../../../coverage/libs/<context>/application'
 };
 ```
 
 ### 2. Excluir testes do lint de dependências
 
-`libs/<context>/domain/eslint.config.mjs` (e copiar para `/application` e `/infra`):
-
-Adicione `ignoredFiles` no `@nx/dependency-checks`:
+Só em `libs/<context>/domain/eslint.config.mjs` (substitui o conteúdo gerado; ver também
+"Proteção da Lib de Domínio"):
 
 ```javascript
+import baseConfig, { domainLayer } from "../../../eslint.config.mjs";
+
 export default [
     ...baseConfig,
-    ...domainLayer,
-    {
-        files: ['eslint.config.mjs'],
-        ignorePatterns: ['**/*'],
-    },
-    {
-        plugins: { '@nx': nxPlugin },
-        rules: {
-            '@nx/dependency-checks': 'error',
-        },
-        settings: {
-            '@nx/dependency-checks': {
-                ignoredFiles: [
-                    '{projectRoot}/jest.*.{cts,ts}',
-                    '{projectRoot}/src/**/*.spec.ts',
-                ],
-            },
-        },
-    },
+    ...domainLayer
 ];
 ```
 
-Isso evita que `@nestjs/testing` (usado só em `.spec.ts`) vire dependency.
+Em `libs/<context>/application/eslint.config.mjs` e `libs/<context>/infra/eslint.config.mjs`,
+acrescente os specs e configs do Jest ao `ignoredFiles` que o gerador já cria:
+
+```javascript
+import baseConfig from "../../../eslint.config.mjs";
+
+export default [
+    ...baseConfig,
+    {
+        files: [
+            "**/*.json"
+        ],
+        rules: {
+            "@nx/dependency-checks": [
+                "error",
+                {
+                    ignoredFiles: [
+                        "{projectRoot}/eslint.config.{js,cjs,mjs,ts,cts,mts}",
+                        "{projectRoot}/jest.*.{cts,ts}",
+                        "{projectRoot}/src/**/*.spec.ts"
+                    ]
+                }
+            ]
+        },
+        languageOptions: {
+            parser: await import("jsonc-eslint-parser")
+        }
+    }
+];
+```
+
+- `ignoredFiles` é opção da regra `@nx/dependency-checks`: diz quais arquivos-fonte ela não analisa.
+  Assim `@nestjs/testing` (usado só em `.spec.ts`) não vai para `dependencies` no `nx lint --fix`.
+- O bloco precisa de `files: ["**/*.json"]` e do parser `jsonc-eslint-parser`: a regra roda sobre o
+  `package.json` da lib.
+- Application e infra **não** recebem `...domainLayer` — ele bloquearia APIs do Node que a infra usa
+  (ex.: `node:crypto` no `CryptoIdGeneratorAdapter`).
+- Referência funcionando: `libs/import/infra/eslint.config.mjs`.
 
 ## Proteção da Lib de Domínio (obrigatório)
 

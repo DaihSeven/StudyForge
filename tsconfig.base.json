@@ -35,6 +35,15 @@
       ],
       "@studyforge/import/infra": [
         "./libs/import/infra/src/index.ts"
+      ],
+      "@studyforge/identity/domain": [
+        "./libs/identity/domain/src/index.ts"
+      ],
+      "@studyforge/identity/application": [
+        "./libs/identity/application/src/index.ts"
+      ],
+      "@studyforge/identity/infra": [
+        "./libs/identity/infra/src/index.ts"
       ]
     }
   },

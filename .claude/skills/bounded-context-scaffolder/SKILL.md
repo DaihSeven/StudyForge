@@ -1,6 +1,6 @@
 ---
 name: bounded-context-scaffolder
-description: Gera estrutura de novo bounded context (domain, application, infra) respeitando regras Nx, tags ESLint, CLAUDE.md e padrões de inversão de dependência do StudyForge.
+description: Use quando for criar um novo bounded context no StudyForge (ex: identity, quiz). Gera estrutura (domain, application, infra) respeitando regras Nx, tags ESLint, CLAUDE.md e inversão de dependência.
 allowed-tools: Bash, Read, Write, Edit
 ---
 

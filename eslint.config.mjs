@@ -100,10 +100,15 @@ export default [
                             sourceTag: "scope:import",
                             onlyDependOnLibsWithTags: ["scope:import", "scope:shared"]
                         },
-                        // api: compõe os contextos (import) e o kernel compartilhado
+                        // identity: só identity ou shared (nunca import/quiz)
+                        {
+                            sourceTag: "scope:identity",
+                            onlyDependOnLibsWithTags: ["scope:shared", "scope:identity"]
+                        },
+                        // api: compõe os contextos (import, identity) e o kernel compartilhado
                         {
                             sourceTag: "scope:api",
-                            onlyDependOnLibsWithTags: ["scope:shared", "scope:import"]
+                            onlyDependOnLibsWithTags: ["scope:shared", "scope:import", "scope:identity"]
                         },
                         // web: sem acesso direto a libs neste estágio
                         {
