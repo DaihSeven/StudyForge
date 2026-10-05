@@ -3,7 +3,7 @@
 > Plataforma de estudos para criação, edição, publicação e execução de simulados,
 > construída a partir de material fornecido pelo mentor em formatos variados.
 
-Status: **Etapa 2 — Primeiro artefato.** Marcos 2.1 (infraestrutura) e 2.2 (domínio mínimo) concluídos.
+Status: **Etapa 2 — Primeiro artefato.** Marcos 2.1–2.5 concluídos; contexto `identity` scaffoldado.
 
 ---
 
@@ -81,37 +81,40 @@ tecnologias.
 - `quiz` e `import` nunca dependem um do outro diretamente — comunicam-se apenas via
   contratos compartilhados (DTOs).
 
-### 4.1 Monorepo (Nx)
+### 4.1 Monorepo (Nx) — Estado Atual
 
 ```
 studyforge/
 ├── apps/
-│   ├── api/            # NestJS
+│   ├── api/            # NestJS (com ZodValidationPipe, POST /api/draft-questions)
 │   ├── api-e2e/
-│   ├── web/             # Next.js
+│   ├── web/            # Next.js (App Router, sem acesso a libs de domínio)
 │   └── web-e2e/
 ├── libs/
 │   ├── shared/
-│   │   ├── domain/      # kernel comum (EntityId, OrganizationId, Result, DomainError)
-│   │   ├── contracts/    # DTOs/enums que cruzam fronteiras (Zod)
-│   │   └── util/
-│   ├── identity/
-│   │   ├── domain/       # Organization, User, Membership, Role
-│   │   ├── application/  # use cases + ports
-│   │   └── infra/        # Prisma, Google OAuth
-│   ├── quiz/
-│   │   ├── domain/       # Quiz, Question, AlternativeOption, FeedbackPolicy, Attempt, Answer
-│   │   ├── application/  # use cases + ports
-│   │   └── infra/        # Prisma
-│   └── import/
-│       ├── domain/       # DraftQuestion, ImportSource, ExtractionConfidence
-│       ├── application/  # use cases + ports (ContentImporter, AiQuestionExtractor)
-│       └── infra/
-│           ├── pasted-text/
-│           └── ai-extraction/
+│   │   ├── domain/      # kernel comum (EntityId, OrganizationId, Result, DomainError, Alternative, QuestionType)
+│   │   ├── contracts/   # DTOs/Zod schemas (CreateDraftQuestionCommandSchema)
+│   │   └── prisma/      # PrismaService centralizado
+│   ├── identity/        # ✅ NOVO (Etapa 2, Marco 2.6)
+│   │   ├── domain/      # User, Organization, Membership, MembershipRole (21 testes)
+│   │   ├── application/ # estrutura vazia (ports/, use-cases/ — implementação Etapa 3)
+│   │   └── infra/       # IdentityInfraModule vazio (implementação Etapa 3)
+│   ├── quiz/            # ⏳ TODO (Etapa 3)
+│   │   ├── domain/
+│   │   ├── application/
+│   │   └── infra/
+│   └── import/          # ✅ Marcos 2.2–2.5
+│       ├── domain/      # DraftQuestion, Alternative, QuestionType
+│       ├── application/ # CreateDraftQuestionUseCase, ports (IdGenerator, DraftQuestionRepository)
+│       └── infra/       # CryptoIdGeneratorAdapter, PrismaDraftQuestionRepository, ImportInfraModule
 ├── prisma/
+│   ├── schema.prisma    # models: DraftQuestion, Alternative; Prisma 7.10 + pg adapter
+│   ├── prisma.config.ts # DATABASE_URL via env
+│   └── migrations/      # 20261001231755_init
 └── nx.json
 ```
+
+**Estrutura-alvo (Etapa 3+):** Adicionar `quiz` (domain + application + infra) e `course`.
 
 ### 4.2 Fronteiras protegidas
 
@@ -185,17 +188,25 @@ estudante em outra) sem ambiguidade no modelo de dados.
 **Etapa 1 — Fundação documental** *(concluída)*
 `README.md`, `CLAUDE.md`, `AGENT.md` revisados antes de qualquer código.
 
-**Etapa 2 — Primeiro artefato** *(atual)*
+**Etapa 2 — Primeiro artefato** *(concluída)*
 Criação do monorepo Nx e implementação do menor fluxo que valida a arquitetura de
 ponta a ponta: texto estruturado → `DraftQuestion` → persistência → consulta.
 
 - Marco 2.1 — infraestrutura do monorepo (Nx, `api`, `web`, Prisma) *(concluído)*
 - Marco 2.2 — domínio mínimo (`shared/domain` e `import/domain`) *(concluído)*
+- Marco 2.3 — application layer: ports, use cases, contratos Zod *(concluído)*
+- Marco 2.4 — infra: PrismaDraftQuestionRepository, CryptoIdGeneratorAdapter, módulos NestJS *(concluído)*
+- Marco 2.5 — API REST: ZodValidationPipe, POST /api/draft-questions, testes e2e *(concluído)*
+- Marco 2.6 — contexto `identity`: User, Organization, Membership, MembershipRole (domínio scaffoldado) *(concluído)*
 
-**Etapa 3 — MVP 1**
-Evolução para: importação/extração automatizada (IA), revisão do mentor, criação e
-publicação de quiz, configuração de política de feedback, resposta do estudante e
-cálculo de resultado.
+**Etapa 3 — MVP 1** *(próxima)*
+Implementação das camadas application e infra dos contextos; publicação e execução de quiz.
+
+- Marco 3.1: Implementar repositories + migrations `identity` (UserRepository, OrganizationRepository)
+- Marco 3.2: Contexto `quiz` (scaffold + domain models: Quiz, Question, Attempt, Answer)
+- Marco 3.3: Contexto `course` (scaffold + domain models)
+- Marco 3.4: Quiz publishing (draft → publicado)
+- Marco 3.5: Student execution (responder quiz + cálculo de resultado)
 
 ## 9. Decisões em aberto
 

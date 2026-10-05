@@ -10,28 +10,44 @@ específicas registradas no `CLAUDE.md` e no `README.md` prevalecem.
 
 ## 1. Estado atual do repositório
 
-O projeto está na **Etapa 2 — Primeiro artefato**, com o **Marco 2.1**
-(infraestrutura do monorepo) e o **Marco 2.2** (domínio mínimo) concluídos.
-Existe hoje:
+O projeto está na **Etapa 2 — Primeiro artefato**, com os **Marcos 2.1–2.5**
+concluídos e o contexto `identity` scaffoldado (domínio completo com 21 testes;
+application e infra estruturados mas vazios). Existe hoje:
 
-- monorepo Nx 23 inicializado;
-- `apps/api` (NestJS 11) e `apps/web` (Next.js 16, App Router), ambos ainda com
-  o scaffold padrão gerado pelo Nx e sem acesso direto a nenhuma lib;
-- `libs/shared/domain` (`shared-domain`, tags `scope:shared`, `type:domain`):
-  `DomainError`, `OrganizationId`, `Alternative`, `QuestionType` e as regras
-  estruturais por tipo (`QUESTION_TYPE_RULES`);
-- `libs/import/domain` (`import-domain`, tags `scope:import`, `type:domain`):
-  `DraftQuestion`, que depende apenas de `shared-domain`;
-- Prisma 7 configurado (`prisma/schema.prisma` + `prisma.config.ts`), provider
-  PostgreSQL, sem models e sem migrations;
-- lint, testes (Jest) e build funcionando para todos os projetos.
+- monorepo Nx 23 com 11 projetos
+- `apps/api` (NestJS 11): ZodValidationPipe, POST /api/draft-questions endpoint com validação Zod
+- `apps/web` (Next.js 16, App Router): scaffold padrão, sem dependências de domínio
+- **shared (kernel)**:
+  - `libs/shared/domain`: EntityId, OrganizationId, Result, DomainError, Alternative, QuestionType, regras por tipo
+  - `libs/shared/contracts`: Zod schemas (CreateDraftQuestionCommandSchema)
+  - `libs/shared/prisma`: PrismaService centralizado (Prisma 7.10 + pg adapter)
+- **import context** (Marcos 2.2–2.5):
+  - `libs/import/domain`: DraftQuestion, Alternative, regras de validação
+  - `libs/import/application`: CreateDraftQuestionUseCase, ports (IdGenerator, DraftQuestionRepository)
+  - `libs/import/infra`: CryptoIdGeneratorAdapter, PrismaDraftQuestionRepository, ImportInfraModule
+- **identity context** (Marco 2.6, novo):
+  - `libs/identity/domain`: User, Organization, Membership, MembershipRole (21 testes, sem organizationId em User)
+  - `libs/identity/application`: estrutura vazia (ports/, use-cases/)
+  - `libs/identity/infra`: IdentityInfraModule vazio
+- Prisma 7.10 com schema: models DraftQuestion (com alternativas compostas) e Alternative
+- Migração criada: 20261001231755_init
+- ESLint: regras scope (shared, import, identity, api, web) e type (domain, application, infra, contracts)
+- 108 testes (shared-domain 26, import-domain 31, identity-domain 21, mais 30 de application/infra/api)
+- lint, test, build funcionando para todos os projetos
+- skill `bounded-context-scaffolder` criada (gera novo bounded context com estrutura + proteções)
 
 Não existe ainda:
 
-- `libs/quiz/domain`, libs de aplicação/infra e `shared/contracts`;
-- nenhum use case, repositório, controller ou endpoint do StudyForge;
-- nenhum model Prisma nem banco de dados real conectado (`DATABASE_URL` só em
-  `.env.example`).
+- `libs/quiz/domain`, `libs/quiz/application`, `libs/quiz/infra` (Etapa 3)
+- `libs/course/domain`, `libs/course/application`, `libs/course/infra` (Etapa 3)
+- **Camadas application e infra do contexto `identity`** (ports e adapters — Etapa 3)
+- Prisma models para `identity`: User, Organization, Membership (Etapa 3)
+- Endpoints para `identity` (criar organização, criar usuário, gerenciar membership)
+- Autenticação/autorização (OAuth, JWT) — identity context isolado, sem login ainda
+- Importadores de PDF/DOCX (apenas texto estruturado em POST /api/draft-questions por enquanto)
+- Extração via IA (port AiQuestionExtractor existe em design, mas não implementada)
+- Quiz: criação, publicação, execução, resultado do estudante (Etapa 3)
+- Banco de dados real conectado (`DATABASE_URL` em `.env.local` com Neon ou local PostgreSQL)
 
 ## 2. Como este repositório evolui
 
@@ -44,6 +60,9 @@ O desenvolvimento segue três etapas definidas pelo responsável do projeto:
 3. **Etapa 3 — MVP 1**: importação/extração automatizada, revisão do mentor,
    criação/publicação de quiz, política de feedback, resposta do estudante e
    resultado.
+
+Marcos dentro de uma etapa representam progressos coesos e devem ser commitados
+isoladamente.
 
 Um agente não deve pular etapas nem antecipar trabalho de etapas futuras sem
 instrução explícita do responsável do projeto.
@@ -74,6 +93,17 @@ npx nx graph
 # Execução local
 PORT=3333 npx nx serve api   # http://localhost:3333/api (sem PORT, usa 3000)
 npx nx dev web               # http://localhost:3000
+
+# Testes de integração (com banco PostgreSQL real)
+npx nx run import-infra:test-integration
+
+# Testes de um bounded context específico
+npx nx run identity-domain:test
+npx nx run import-application:test
+
+# Gerar novo bounded context (via Claude Code)
+# Invocar skill: "Using the Bounded Context Scaffolder skill, scaffold a new bounded context called 'quiz'"
+# Skill gera 3 libs (domain/application/infra) com proteções (types: [], domainLayer)
 
 # Prisma (não requer banco para validar o schema)
 npx prisma validate
@@ -114,6 +144,10 @@ qualquer arquivo:
       organizações via `Membership`, ver `README.md`, seção 6.1).
 - [ ] Confirmar que nenhum fluxo automatizado está publicando conteúdo sem
       revisão do mentor.
+- [ ] Confirmar que a mudança respeita as regras de tagging do Nx (`scope:*` e
+      `type:*`) e não viola `enforce-module-boundaries` do ESLint.
+- [ ] Confirmar que skill `bounded-context-scaffolder` pode ser usada para gerar
+      novo bounded context, se aplicável (nunca criar lib manualmente se há skill).
 
 ## 6. Referências
 
