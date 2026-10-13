@@ -215,3 +215,16 @@ Implementação das camadas application e infra dos contextos; publicação e ex
   por token e uso em volume).
 - Fluxo de convite/aprovação/código de entrada para organizações.
 - Momento de priorizar importers de PDF e DOCX (posterior ao MVP 1).
+
+## 📋 Documentação de Atividades
+
+Ver **[DELIVERABLES.md](./DELIVERABLES.md)** para histórico completo:
+- **Semanas 1–4 (S1–S4):** Entregues ✅
+- **Semanas 5–7 (S5–S7):** Em progresso 🔄
+- **Marcos 3.1–3.4:** Planejados ⏳
+
+Inclui:
+- Status de cada entregável
+- Localização de arquivos
+- Como testar
+- Commits relacionados
