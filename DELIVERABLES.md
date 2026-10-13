@@ -122,20 +122,30 @@ feat: studyforge-mcp-validator — MCP com red team
 
 | Item | Status | Localização | O quê |
 |---|---|---|---|
-| **Spec** | 🔄 Em progresso | `docs/specs/s5-identity-repositories.md` | Ubíqua language (User, Organization, Membership), 5 critérios EARS, 3 cenários BDD |
-| **Validação MCP** | 🔄 Planejado | MCP validator | Validar spec contra bounded context rules |
-| **Commit** | 🔄 Pendente | — | `docs(s5): spec identity repositories — ubíqua language + EARS + BDD` |
+| **Spec** | ✅ Entregue | \`docs/specs/s5-identity-repositories.md\` | Ubíqua language: User, Organization, Membership, MembershipRole (+ 5 invariantes) |
+| **5 EARS Criteria** | ✅ Entregue | Spec completa | FindByEmail, FindById, Save, FindOrgById, FindMembershipsByOrg |
+| **3 BDD Scenarios** | ✅ Entregue | Spec completa | Caso feliz, not found, duplicate email |
+| **Validação MCP** | ⏳ S6 | MCP validator | Validar spec contra bounded context rules |
+| **Commit** | ✅ Entregue | — | \`docs(s5): spec identity repositories — ubíqua language + EARS + BDD\` |
 
 **O que é:**
-- Especificação comportamental (sem implementação)
-- Documento blueprint pra S6 (ADR + tasks) e Marco 3.1 (code)
-- Validado com MCP validator (estudy-forge-mcp-validator)
+- Especificação comportamental (sem implementação, apenas documento)
+- Blueprint pra S6 (ADR + tasks) e Marco 3.1 (code)
+- Validável com MCP validator (studyforge-mcp-validator)
 
-**Como testar (em S5+):**
-
-Claude Code: “Validate this spec against identity bounded context”
+**Como testar (em S6+):**
+\`\`\`
+Claude Code: "Validate this spec against identity bounded context"
 → MCP validator roda
 → Resultado: ✅ OK ou ❌ Erros
+\`\`\`
+
+**Estrutura de linguagem ubíqua:**
+- User: Identidade global (mentor ou estudante)
+- Organization: Tenant que agrupa usuários
+- Membership: Vínculo User → Organization com Role
+- MembershipRole: MENTOR ou STUDENT
+- Invariante: User.organizationId NÃO EXISTE; Membership.organizationId obrigatório
 
 
 ---
