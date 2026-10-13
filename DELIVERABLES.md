@@ -223,7 +223,7 @@ Claude Code: “Validate this spec against identity bounded context”
 | **S2** | Docs + Skeleton | ✅ Entregue | CLAUDE.md + Nx monorepo |
 | **S3** | Docs + Skill | ✅ Entregue | AGENT.md + bounded-context-scaffolder |
 | **S4** | MCP | ✅ Entregue | GitHub externo (studyforge-mcp-validator) |
-| **S5** | Spec | 🔄 Em progresso | `docs/specs/s5-identity-repositories.md` |
+| **S5** | **Spec** | ✅ Entregue | `docs/specs/s5-identity-repositories.md` | Ubíqua language (User, Org, Membership), 5 EARS, 3 BDD scenarios |
 | **S6** | ADR + Tasks | 🔄 Planejado | `docs/adrs/` + `docs/tasks/` |
 | **S7** | 3 Specs | 🔄 Planejado | `docs/specs/` |
 | **Marco 3.1** | Código | ⏳ Depois de S6 | `libs/identity/application` + `infra` |
