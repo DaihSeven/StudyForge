@@ -154,10 +154,10 @@ Claude Code: "Validate this spec against identity bounded context"
 
 | Item | Status | Localização | O quê |
 |---|---|---|---|
-| **ADR-003** | 🔄 Planejado | `docs/adrs/adr-003-identity-repositories.md` | Decisão arquitetural (7 seções obrigatórias) |
-| **Tasks** | 🔄 Planejado | `docs/tasks/s6-identity-implementation.md` | Checklist de tasks pra implementar identity |
-| **RPI Evidence** | 🔄 Planejado | Chat transcript ou documento | Evidência de sessões de refinement em paralelo |
-| **Commit** | 🔄 Pendente | — | `docs(s6): ADR + tasks identity repositories` |
+| **ADR-003** | ✅ Entregue | `docs/adrs/adr-003-identity-repositories.md` | Repository pattern, ports em application, 7 seções |
+| **Tasks** | ✅ Entregue | `docs/tasks/s6-identity-implementation-tasks.md` | 25 tasks em 7 phases (interfaces → testes → commit) |
+| **RPI Evidence** | ✅ Entregue | `docs/rpi/s6-identity-rpi-evidence.md` | Decisões refinadas, conversas-chave, evidência numérica |
+| **Commit** | ✅ Entregue | — | `docs(s6): ADR + tasks identity repositories` |
 
 **O que é:**
 - ADR: Justificativa arquitetural (por que fazer assim)
