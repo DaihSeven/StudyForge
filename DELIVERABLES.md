@@ -257,10 +257,8 @@ Toda semana, após commitar entrega:
 
 ```bash
 git add DELIVERABLES.md
-git commit -m "docs: update DELIVERABLES — S5 spec entregue"
+git commit -m "docs: :books: update DELIVERABLES — S5 spec entregue"
 git push
 ```
 
----
 
-## 🔑 Próximos Passos
