@@ -24,4 +24,35 @@ describe('PrismaService', () => {
     expect(typeof service.onModuleDestroy).toBe('function');
     expect(service.draftQuestion).toBeDefined();
   });
+
+  describe('lifecycle hooks', () => {
+    let service: PrismaService;
+
+    beforeEach(() => {
+      process.env['DATABASE_URL'] = 'postgresql://user:pass@localhost:5432/db';
+      service = new PrismaService();
+    });
+
+    it('connects to the database on module init', async () => {
+      const connect = jest.spyOn(service, '$connect').mockResolvedValue();
+
+      await service.onModuleInit();
+
+      expect(connect).toHaveBeenCalledTimes(1);
+    });
+
+    it('propagates connection failures on module init', async () => {
+      jest.spyOn(service, '$connect').mockRejectedValue(new Error('connection refused'));
+
+      await expect(service.onModuleInit()).rejects.toThrow('connection refused');
+    });
+
+    it('disconnects from the database on module destroy', async () => {
+      const disconnect = jest.spyOn(service, '$disconnect').mockResolvedValue();
+
+      await service.onModuleDestroy();
+
+      expect(disconnect).toHaveBeenCalledTimes(1);
+    });
+  });
 });

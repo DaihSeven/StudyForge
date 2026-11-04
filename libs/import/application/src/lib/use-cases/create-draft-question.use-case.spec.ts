@@ -136,4 +136,11 @@ describe('CreateDraftQuestionUseCase', () => {
 
     await expect(useCase.execute(singleChoice())).rejects.toBe(failure);
   });
+
+  it('rethrows non-domain errors raised while building the draft and persists nothing', async () => {
+    const malformed = singleChoice({ alternatives: undefined as unknown as CreateDraftQuestionCommand['alternatives'] });
+
+    await expect(useCase.execute(malformed)).rejects.toBeInstanceOf(TypeError);
+    expect(repository.saved).toEqual([]);
+  });
 });
