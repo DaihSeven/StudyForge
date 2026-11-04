@@ -35,3 +35,8 @@ out
 
 # Prisma Client gerado (prisma generate)
 /libs/shared/prisma/src/generated
+# Cobertura de testes (jest --coverage)
+/coverage
+
+# TypeScript incremental
+*.tsbuildinfo

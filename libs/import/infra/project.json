@@ -33,6 +33,18 @@
         "jestConfig": "libs/import/infra/jest.integration.config.cts",
         "runInBand": true
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/import/infra/tsconfig.lib.json",
+          "tsc --noEmit -p libs/import/infra/tsconfig.spec.json"
+        ],
+        "parallel": false,
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }

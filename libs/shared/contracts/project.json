@@ -21,6 +21,18 @@
           "libs/shared/contracts/*.md"
         ]
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/shared/contracts/tsconfig.lib.json",
+          "tsc --noEmit -p libs/shared/contracts/tsconfig.spec.json"
+        ],
+        "parallel": false,
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }

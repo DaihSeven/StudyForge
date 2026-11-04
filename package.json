@@ -2,6 +2,14 @@
   "name": "studyforge",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "lint": "nx run-many -t lint",
+    "typecheck": "nx run-many -t typecheck",
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "test:cov": "nx run-many -t test --coverage",
+    "audit": "npm audit --audit-level=high"
+  },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
     "@nestjs/schematics": "^11.0.0",
