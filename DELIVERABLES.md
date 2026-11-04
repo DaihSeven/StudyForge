@@ -183,6 +183,76 @@ Claude Code: "Validate this spec against identity bounded context"
 
 ---
 
+## Semana 8 — Verificadores
+
+| Item | Status | Localização | O quê |
+|---|---|---|---|
+| **Scripts de verificação** | ✅ Entregue | `package.json` | `lint`, `typecheck`, `build`, `test`, `test:cov`, `audit`, `audit:full` (todos via Nx) |
+| **Alvo `typecheck`** | ✅ Entregue | `project.json` de cada projeto + `nx.json` | `tsc --noEmit` no tsconfig lib/app **e** no `tsconfig.spec.json` |
+| **Cobertura mínima** | ✅ Entregue | `jest.config.*` de cada projeto | `collectCoverageFrom` + `coverageThreshold.global` de 80% |
+| **CI** | ✅ Entregue | `.github/workflows/ci.yml` | 6 jobs em push/PR na `main` |
+
+### O que cada check garante
+
+| Job (`name:`) | Comando | Garante |
+|---|---|---|
+| **Lint** | `npm run lint` | ESLint em todos os projetos, incluindo `enforce-module-boundaries` e `domainLayer` (regras 2, 4 e 8 do CLAUDE.md) |
+| **Type check** | `npm run typecheck` | Código **e** specs compilam sem erro de tipo (`tsc --noEmit`) |
+| **Build** (needs Lint, Type check) | `npm run build` | Todos os projetos compilam |
+| **Test** (needs Lint, Type check) | `npm run test:cov` | Testes passam e cada projeto cumpre 80% de statements, branches, functions e lines; `coverage/` é publicado como artefato (7 dias, `if: always()`) |
+| **Dependency check: vulnerabilidade conhecida (npm audit)** | `npm run audit` (+ `audit:full` informativo) | Nenhuma vulnerabilidade high/critical em dependências de **produção** |
+| **Dependency check: revisão do PR (dependency-review-action)** | só em `pull_request` | O PR não introduz dependência com severidade high ou maior (`fail-on-severity: high`) |
+
+O CI define `NX_DAEMON=false`, `NX_NO_CLOUD=true` e um `DATABASE_URL` fictício (o `prisma generate` lê a variável via `prisma.config.ts`). O `test-integration` (PostgreSQL real) **não** roda no CI.
+
+**Como a cobertura mínima bloqueia o merge:** se um projeto fica abaixo de 80% em qualquer métrica, o Jest sai com erro (`"global" coverage threshold for ... not met`), o `nx run-many` falha, e o job **Test** fica vermelho. Com o job como *required check* na branch protection, o PR não pode ser mergeado. Arquivos sem teste contam como 0%, porque o `collectCoverageFrom` inclui `src/**/*.{ts,tsx}` (exclui specs, `index.ts`, `*.module.ts`, `main.ts`, `dto/`, `generated/` e `*.d.ts`).
+
+### Cobertura por projeto (antes → depois)
+
+"Antes" = com `collectCoverageFrom` e threshold já ativos, antes dos testes novos.
+
+| Projeto | Antes (stmts / branch / func / lines) | Depois (stmts / branch / func / lines) |
+|---|---|---|
+| shared-domain | — | 93.22 / 100 / 96.29 / 92.72 |
+| shared-contracts | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| import-domain | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| import-application | 95.23 / **50** / 100 / 94.73 | 100 / 100 / 100 / 100 |
+| shared-prisma | 81.96 / 100 / **33.33** / 84.21 | 100 / 100 / 100 / 100 |
+| import-infra | 94.11 / 100 / **50** / 91.66 | 100 / 100 / 100 / 100 |
+| identity-domain | 100 / 95.83 / 100 / 100 | 100 / 95.83 / 100 / 100 |
+| identity-infra | 0/0 (sem código medido) | 0/0 |
+| identity-application | 0/0 (sem código nem testes; `passWithNoTests`) | 0/0 |
+| api | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| web | **25** / 100 / **33.33** / **28.57** | 100 / 100 / 100 / 100 |
+
+Em negrito, abaixo de 80% antes dos testes novos. Nenhum projeto precisou baixar o threshold, então não há exceção a justificar.
+
+**Testes novos** (unitários, sem banco):
+- `import-application` — `CreateDraftQuestionUseCase` relança erro que não é `DomainError` (ex.: `alternatives` malformado) e não persiste nada.
+- `shared-prisma` — `PrismaService`: `onModuleInit` conecta, propaga falha de conexão; `onModuleDestroy` desconecta.
+- `import-infra` — `PrismaDraftQuestionRepository` (`prisma-draft-question.repository.spec.ts`): payload exato enviado ao Prisma (questão + alternativas numa única chamada) e propagação de falhas. O caminho com PostgreSQL real segue coberto só pelo `test-integration`.
+- `web` — `specs/route.spec.ts` (`GET /api/hello`) e `specs/layout.spec.tsx` (shell `html`/`body` e metadata).
+
+### Provas de que os verificadores bloqueiam
+
+1. **Typecheck:** `export const __bad: number = "x";` em `libs/shared/domain/src/lib/result.ts` → `npm run typecheck` falhou com `error TS2322` e código de saída 1. Revertido.
+2. **Cobertura:** threshold de branches de `identity-domain` subido para 100% (cobertura real 95.83%) → `npm run test:cov` falhou com `"global" coverage threshold for branches (100%) not met: 95.83%` e código 1. Revertido.
+
+### Decisão de dependências
+
+- **Vulnerabilidades: 69 → 49, 0 críticas.** Feito com `nx` e todos os `@nx/*` em 23.3.1 (lockfile regenerado, pois o `npm install` dava `ERESOLVE` com `@nx/*@23.2.1`), `npm audit fix` sem `--force` e `next` (+ `eslint-config-next`, `@next/eslint-plugin-next`) em `~16.4.5`. Sem downgrade de major.
+- **Produção bloqueia, desenvolvimento só informa.** `npm run audit` usa `--omit=dev`: o que chega ao usuário final precisa estar limpo. O `audit:full` (inclui dev) roda no CI com `continue-on-error: true` e só informa, porque vulnerabilidades de ferramentas de build não correm em produção e muitas dependem de upgrade de major das ferramentas.
+- **Override do `multer`.** O `multer` 2.4.0 (via `@nestjs/platform-express`) tinha vulnerabilidade high de DoS (GHSA-q7qp-rjg7-q26m). A correção está no `multer@2.5.0`, mas nenhuma versão 11.x do `@nestjs/platform-express` (até 11.2.8) o declara; só existe a 12.x (major). Por isso, `overrides: { "multer": "^2.5.0" }` no `package.json` (mesma major, sem `--force`). `npm ls multer` mostra só `multer@2.5.0 overridden`, e o `package-lock.json` reflete isso (o CI usa `npm ci`).
+  - **Uso de upload no código:** `grep -rnE "multer|FileInterceptor|FilesInterceptor|UploadedFile" apps libs --include=*.ts` não retornou nada, então o projeto não usa upload de arquivos.
+  - **Remover o override quando o Nest 11 declarar `multer >= 2.5`.**
+- **`undici` (só desenvolvimento).** Vulnerabilidade high, transitiva do `nx`. O `npm audit` só a corrige com `nx@17.2.8`, um downgrade major, o que está fora de cogitação. Fica visível no `audit:full`, sem bloquear.
+
+### Branch protection
+
+<!-- Preencher com prints: regra da branch `main`, required status checks (os 6 jobs), PR obrigatório. -->
+
+---
+
 ## Marco 3.1 — Identity Repositories (Implementação)
 
 | Item | Status | Localização | O quê |
@@ -236,6 +306,7 @@ Claude Code: "Validate this spec against identity bounded context"
 | **S5** | **Spec** | ✅ Entregue | `docs/specs/s5-identity-repositories.md` | Ubíqua language (User, Org, Membership), 5 EARS, 3 BDD scenarios |
 | **S6** | ADR + Tasks | 🔄 Planejado | `docs/adrs/` + `docs/tasks/` |
 | **S7** | 3 Specs | 🔄 Planejado | `docs/specs/` |
+| **S8** | Verificadores | ✅ Entregue | `.github/workflows/ci.yml` + scripts + cobertura mínima |
 | **Marco 3.1** | Código | ⏳ Depois de S6 | `libs/identity/application` + `infra` |
 | **Marco 3.2** | Código | ⏳ Depois de S7 | `libs/quiz/domain` + `application` + `infra` |
 | **Marco 3.3–3.4** | Código | ⏳ Depois de 3.2 | `libs/quiz/` + `apps/api/` |

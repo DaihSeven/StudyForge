@@ -39,6 +39,18 @@
         "command": "npx prisma generate",
         "cwd": "{workspaceRoot}"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/shared/prisma/tsconfig.lib.json",
+          "tsc --noEmit -p libs/shared/prisma/tsconfig.spec.json"
+        ],
+        "parallel": false,
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }

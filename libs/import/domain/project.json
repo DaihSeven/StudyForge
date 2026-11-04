@@ -21,6 +21,18 @@
           "libs/import/domain/*.md"
         ]
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/import/domain/tsconfig.lib.json",
+          "tsc --noEmit -p libs/import/domain/tsconfig.spec.json"
+        ],
+        "parallel": false,
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }

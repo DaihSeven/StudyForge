@@ -21,6 +21,18 @@
           "libs/identity/domain/*.md"
         ]
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "commands": [
+          "tsc --noEmit -p libs/identity/domain/tsconfig.lib.json",
+          "tsc --noEmit -p libs/identity/domain/tsconfig.spec.json"
+        ],
+        "parallel": false,
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }
