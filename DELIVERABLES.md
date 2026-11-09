@@ -249,7 +249,28 @@ Em negrito, abaixo de 80% antes dos testes novos. Nenhum projeto precisou baixar
 
 ### Branch protection
 
-<!-- Preencher com prints: regra da branch `main`, required status checks (os 6 jobs), PR obrigatório. -->
+O ruleset **`proteger-main`** está ativo (`enforcement: active`) na branch padrão (`~DEFAULT_BRANCH`, ou seja, `main`) e exige:
+
+- **PR antes do merge.** Não é possível dar push direto na `main`.
+- **Status checks obrigatórios** (5):
+  - `Lint`
+  - `Type check`
+  - `Build`
+  - `Test`
+  - `Dependency check: vulnerabilidade conhecida (npm audit)`
+
+O job `Dependency check: revisão do PR (dependency-review-action)` também roda em todo PR, mas **não é obrigatório**.
+
+O ruleset também bloqueia a exclusão da branch e o force push.
+
+**Por que a cobertura bloqueia o merge:** o job `Test` roda o Jest com `coverageThreshold` de 80% por projeto. Se qualquer projeto fica abaixo de 80% em alguma métrica, o Jest sai com erro e o job falha. Como `Test` é um check obrigatório do ruleset, o PR fica impedido de ser mergeado até a cobertura voltar a 80%.
+
+Evidências:
+
+- [Ruleset `proteger-main` (configuração completa, PDF)](docs/evidencias/semana8-ruleset.pdf)
+- [Checks do PR #1, todos verdes](docs/evidencias/semana8-pr-checks.png)
+
+![Checks do PR #1](docs/evidencias/semana8-pr-checks.png)
 
 ---
 
