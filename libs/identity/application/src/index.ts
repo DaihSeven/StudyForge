@@ -1,2 +1,2 @@
-// Ports e use cases do contexto identity entram aqui (application não tem módulo Nest).
-export {};
+// Ports e use cases do contexto identity (application não tem módulo Nest).
+export * from './lib/ports/user.repository';

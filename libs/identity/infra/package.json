@@ -7,6 +7,9 @@
   "types": "./src/index.d.ts",
   "dependencies": {
     "tslib": "^2.3.0",
-    "@nestjs/common": "^11.0.0"
+    "@nestjs/common": "^11.0.0",
+    "@studyforge/identity/application": "0.0.1",
+    "@studyforge/identity/domain": "0.0.1",
+    "@studyforge/shared/prisma": "0.0.1"
   }
 }

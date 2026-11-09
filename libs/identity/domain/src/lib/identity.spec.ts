@@ -6,6 +6,7 @@ import { User } from './user';
 
 const userId = EntityId.create('user-1');
 const organizationId = OrganizationId.create('org-1');
+const createdAt = new Date('2026-10-13T10:00:00Z');
 
 function errorOf(fn: () => unknown): unknown {
   try {
@@ -17,30 +18,36 @@ function errorOf(fn: () => unknown): unknown {
 }
 
 describe('User', () => {
-  it('keeps id, trimmed email and name, and is immutable', () => {
-    const user = User.create({ id: userId, email: '  ana@example.com ', name: 'Ana' });
+  it('keeps id, trimmed email, name and createdAt, and is immutable', () => {
+    const user = User.create({ id: userId, email: '  ana@example.com ', name: 'Ana', createdAt });
 
-    expect(user).toMatchObject({ id: userId, email: 'ana@example.com', name: 'Ana' });
+    expect(user).toMatchObject({ id: userId, email: 'ana@example.com', name: 'Ana', createdAt });
     expect(Object.isFrozen(user)).toBe(true);
   });
 
   it('has no organizationId (linked through Membership)', () => {
-    expect(User.create({ id: userId, email: 'ana@example.com', name: 'Ana' })).not.toHaveProperty('organizationId');
+    expect(User.create({ id: userId, email: 'ana@example.com', name: 'Ana', createdAt })).not.toHaveProperty('organizationId');
   });
 
   it.each(['', 'ana', 'ana@', '@example.com', 'ana@example', 'a na@example.com'])('rejects email "%s"', (email) => {
-    expect(errorOf(() => User.create({ id: userId, email, name: 'Ana' }))).toMatchObject({ code: 'INVALID_EMAIL' });
+    expect(errorOf(() => User.create({ id: userId, email, name: 'Ana', createdAt }))).toMatchObject({ code: 'INVALID_EMAIL' });
   });
 
   it.each(['', '   '])('rejects an empty name ("%s")', (name) => {
-    expect(errorOf(() => User.create({ id: userId, email: 'ana@example.com', name }))).toMatchObject({
+    expect(errorOf(() => User.create({ id: userId, email: 'ana@example.com', name, createdAt }))).toMatchObject({
       code: 'EMPTY_USER_NAME',
     });
   });
 
+  it.each([undefined, new Date('invalid')])('rejects an invalid createdAt (%s)', (invalid) => {
+    expect(
+      errorOf(() => User.create({ id: userId, email: 'ana@example.com', name: 'Ana', createdAt: invalid as Date })),
+    ).toMatchObject({ code: 'INVALID_CREATED_AT' });
+  });
+
   it('requires an id', () => {
     const error = errorOf(() =>
-      User.create({ id: undefined as unknown as EntityId, email: 'ana@example.com', name: 'Ana' }),
+      User.create({ id: undefined as unknown as EntityId, email: 'ana@example.com', name: 'Ana', createdAt }),
     );
 
     expect(error).toMatchObject({ code: 'INVALID_ENTITY_ID' });
