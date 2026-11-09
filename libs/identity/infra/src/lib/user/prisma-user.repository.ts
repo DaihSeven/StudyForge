@@ -20,4 +20,10 @@ export class PrismaUserRepository implements UserRepository {
     const row = await this.prisma.user.findUnique({ where: { email } });
     return row ? toDomain(row) : null;
   }
+
+  // Contrato apenas: ainda não grava nada. O comportamento entra no ciclo red/green do
+  // cenário 3 (LOG-RED-GREEN-REFACTOR-3.md).
+  async save(user: User): Promise<User> {
+    return user;
+  }
 }
