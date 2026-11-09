@@ -248,6 +248,21 @@ export class PrismaUserAdapter implements IUserRepository {
 
 ---
 
+## Nota de implementação (2026-11-09, Semana 8)
+
+A implementação seguiu o **padrão já usado no contexto `import`**, e não os nomes e caminhos ilustrativos deste ADR:
+
+| Neste ADR | Como foi implementado |
+|---|---|
+| `IUserRepository` | `UserRepository` |
+| `application/src/repositories/user.repository.ts` | `application/src/lib/ports/user.repository.ts` |
+| `infra/src/adapters/prisma-user.adapter.ts` (`PrismaUserAdapter`) | `infra/src/lib/user/prisma-user.repository.ts` (`PrismaUserRepository`) |
+| token string `'IUserRepository'` | `USER_REPOSITORY_TOKEN = Symbol('UserRepository')` |
+
+**Por quê:** a decisão deste ADR (ports em application, adapters Prisma em infra) não muda. Só a forma: um único padrão no repo inteiro facilita achar e comparar código entre contextos, e o token `Symbol` segue o CLAUDE.md (ports com `InjectionToken`) e evita colisão de strings. Até aqui só existem `findByEmail` e `save`, os métodos que os cenários BDD da S5 exigem. Detalhes em [`LOG-RED-GREEN-REFACTOR-1.md`](../../LOG-RED-GREEN-REFACTOR-1.md).
+
+---
+
 ## Related ADRs
 
 - **ADR-001:** Monorepo Nx com scope boundaries (S2)
