@@ -9,7 +9,8 @@ export class PrismaUserRepository implements UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   // Contrato apenas: o comportamento entra no ciclo red/green do cenário 1 (LOG-RED-GREEN-REFACTOR-1.md).
-  async findByEmail(): Promise<User | null> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async findByEmail(email: string): Promise<User | null> {
     return null;
   }
 }
