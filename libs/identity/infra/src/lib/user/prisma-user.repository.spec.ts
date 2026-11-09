@@ -12,6 +12,13 @@ import { PrismaUserRepository } from './prisma-user.repository';
  */
 type UserRow = { id: string; email: string; name: string; createdAt: Date };
 
+const mentor: UserRow = {
+  id: 'user-uuid-123',
+  email: 'mentor@studyforge.com',
+  name: 'Mentor',
+  createdAt: new Date('2026-10-13T10:00:00Z'),
+};
+
 describe('S5 — identity repositories', () => {
   let table: UserRow[];
   let repository: PrismaUserRepository;
@@ -29,12 +36,7 @@ describe('S5 — identity repositories', () => {
   it('Scenario 1: Encontrar User existente por email (Caso Feliz)', async () => {
     // Given um User com email "mentor@studyforge.com" existe no banco
     // And o email é único
-    table.push({
-      id: 'user-uuid-123',
-      email: 'mentor@studyforge.com',
-      name: 'Mentor',
-      createdAt: new Date('2026-10-13T10:00:00Z'),
-    });
+    table.push(mentor);
 
     // When chamo UserRepository.findByEmail("mentor@studyforge.com")
     // (And nenhum erro é lançado: um erro aqui rejeitaria a promise e falharia o teste)
@@ -42,20 +44,15 @@ describe('S5 — identity repositories', () => {
 
     // Then retorna um User { id, email, createdAt }
     expect(user).toBeInstanceOf(User);
-    expect(user?.id.value).toBe('user-uuid-123');
-    expect(user?.createdAt).toEqual(new Date('2026-10-13T10:00:00Z'));
+    expect(user?.id.value).toBe(mentor.id);
+    expect(user?.createdAt).toEqual(mentor.createdAt);
     // And o email retornado é "mentor@studyforge.com"
     expect(user?.email).toBe('mentor@studyforge.com');
   });
 
   it('Scenario 2: Validação falha — Email não encontrado', async () => {
     // Given nenhum User com email "notexist@studyforge.com" existe no banco
-    table.push({
-      id: 'user-uuid-123',
-      email: 'mentor@studyforge.com',
-      name: 'Mentor',
-      createdAt: new Date('2026-10-13T10:00:00Z'),
-    });
+    table.push(mentor);
 
     // When chamo UserRepository.findByEmail("notexist@studyforge.com")
     // Then retorna null
