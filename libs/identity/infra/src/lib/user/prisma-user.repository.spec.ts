@@ -47,4 +47,19 @@ describe('S5 — identity repositories', () => {
     // And o email retornado é "mentor@studyforge.com"
     expect(user?.email).toBe('mentor@studyforge.com');
   });
+
+  it('Scenario 2: Validação falha — Email não encontrado', async () => {
+    // Given nenhum User com email "notexist@studyforge.com" existe no banco
+    table.push({
+      id: 'user-uuid-123',
+      email: 'mentor@studyforge.com',
+      name: 'Mentor',
+      createdAt: new Date('2026-10-13T10:00:00Z'),
+    });
+
+    // When chamo UserRepository.findByEmail("notexist@studyforge.com")
+    // Then retorna null
+    // And nenhum erro é lançado (findByEmail é lenient)
+    await expect(repository.findByEmail('notexist@studyforge.com')).resolves.toBeNull();
+  });
 });
