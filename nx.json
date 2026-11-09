@@ -26,6 +26,13 @@
         "default",
         "^default"
       ]
+    },
+    "typecheck": {
+      "cache": true,
+      "dependsOn": [
+        "prisma-generate",
+        "^prisma-generate"
+      ]
     }
   },
   "plugins": [

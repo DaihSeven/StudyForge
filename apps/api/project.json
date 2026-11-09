@@ -66,6 +66,18 @@
       "options": {
         "passWithNoTests": true
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "commands": [
+          "tsc --noEmit -p apps/api/tsconfig.app.json",
+          "tsc --noEmit -p apps/api/tsconfig.spec.json"
+        ],
+        "parallel": false,
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }
