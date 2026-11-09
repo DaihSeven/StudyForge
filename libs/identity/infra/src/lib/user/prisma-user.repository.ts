@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '@studyforge/identity/application';
+import { DuplicateEmailError, UserRepository } from '@studyforge/identity/application';
 import { User } from '@studyforge/identity/domain';
 import { EntityId } from '@studyforge/shared/domain';
-import { PrismaService } from '@studyforge/shared/prisma';
+import { Prisma, PrismaService } from '@studyforge/shared/prisma';
 
 type UserRow = { id: string; email: string; name: string; createdAt: Date };
 
@@ -21,9 +21,17 @@ export class PrismaUserRepository implements UserRepository {
     return row ? toDomain(row) : null;
   }
 
-  // Contrato apenas: ainda não grava nada. O comportamento entra no ciclo red/green do
-  // cenário 3 (LOG-RED-GREEN-REFACTOR-3.md).
   async save(user: User): Promise<User> {
+    try {
+      await this.prisma.user.create({
+        data: { id: user.id.value, email: user.email, name: user.name, createdAt: user.createdAt },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new DuplicateEmailError(user.email);
+      }
+      throw error;
+    }
     return user;
   }
 }
