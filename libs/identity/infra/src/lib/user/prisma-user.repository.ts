@@ -11,6 +11,11 @@ function toDomain(row: UserRow): User {
   return User.create({ id: EntityId.create(row.id), email: row.email, name: row.name, createdAt: row.createdAt });
 }
 
+/** P2002: o banco recusou a escrita por violar um índice único (aqui, `users_email_key`). */
+function isUniqueConstraintViolation(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+}
+
 /** `UserRepository` em PostgreSQL. */
 @Injectable()
 export class PrismaUserRepository implements UserRepository {
@@ -27,7 +32,7 @@ export class PrismaUserRepository implements UserRepository {
         data: { id: user.id.value, email: user.email, name: user.name, createdAt: user.createdAt },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (isUniqueConstraintViolation(error)) {
         throw new DuplicateEmailError(user.email);
       }
       throw error;
