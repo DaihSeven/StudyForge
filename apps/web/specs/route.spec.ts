@@ -8,6 +8,6 @@ describe('GET /api/hello', () => {
     const response = await GET(new Request('http://localhost/api/hello'));
 
     expect(response.status).toBe(200);
-    expect(await response.text()).toBe('Hello, from API!');
+    expect(await response.text()).toBe('Teste quebrado de propósito!');
   });
 });
