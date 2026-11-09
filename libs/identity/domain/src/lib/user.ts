@@ -1,6 +1,6 @@
 import { DomainError, EntityId, InvalidEntityIdError } from '@studyforge/shared/domain';
 
-export type InvalidUserCode = 'INVALID_EMAIL' | 'EMPTY_USER_NAME';
+export type InvalidUserCode = 'INVALID_EMAIL' | 'EMPTY_USER_NAME' | 'INVALID_CREATED_AT';
 
 export class InvalidUserError extends DomainError<InvalidUserCode> {
   constructor(code: InvalidUserCode, message: string) {
@@ -14,6 +14,7 @@ export interface UserProps {
   readonly id: EntityId;
   readonly email: string;
   readonly name: string;
+  readonly createdAt: Date;
 }
 
 /**
@@ -25,6 +26,7 @@ export class User {
     readonly id: EntityId,
     readonly email: string,
     readonly name: string,
+    readonly createdAt: Date,
   ) {}
 
   static create(props: UserProps): User {
@@ -38,6 +40,9 @@ export class User {
     if (typeof props.name !== 'string' || props.name.trim() === '') {
       throw new InvalidUserError('EMPTY_USER_NAME', 'User name cannot be empty.');
     }
-    return Object.freeze(new User(props.id, email, props.name));
+    if (!(props.createdAt instanceof Date) || Number.isNaN(props.createdAt.getTime())) {
+      throw new InvalidUserError('INVALID_CREATED_AT', 'User createdAt must be a valid date.');
+    }
+    return Object.freeze(new User(props.id, email, props.name, props.createdAt));
   }
 }

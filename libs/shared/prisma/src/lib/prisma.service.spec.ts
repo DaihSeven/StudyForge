@@ -1,4 +1,15 @@
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaService } from './prisma.service';
+
+// Repassa para o PrismaPg real (o client continua sendo construído de verdade), mas
+// registra com que configuração o PrismaService criou o adapter.
+jest.mock('@prisma/adapter-pg', () => {
+  const actual = jest.requireActual<typeof import('@prisma/adapter-pg')>('@prisma/adapter-pg');
+  return {
+    ...actual,
+    PrismaPg: jest.fn((...args: ConstructorParameters<typeof actual.PrismaPg>) => new actual.PrismaPg(...args)),
+  };
+});
 
 describe('PrismaService', () => {
   const original = process.env['DATABASE_URL'];
@@ -13,16 +24,17 @@ describe('PrismaService', () => {
     expect(() => new PrismaService()).toThrow('DATABASE_URL is not set.');
   });
 
-  // O Prisma 7 devolve um Proxy no construtor (`instanceof` falha), por isso a checagem é
-  // pelos hooks de ciclo de vida que o Nest chama e pelo delegate do model.
-  it('builds a client without connecting when DATABASE_URL is set', () => {
+  it('builds the pg adapter from DATABASE_URL without connecting', () => {
     process.env['DATABASE_URL'] = 'postgresql://user:pass@localhost:5432/db';
+    jest.mocked(PrismaPg).mockClear();
+    const connect = jest.spyOn(PrismaService.prototype, '$connect');
 
-    const service = new PrismaService();
+    new PrismaService();
 
-    expect(typeof service.onModuleInit).toBe('function');
-    expect(typeof service.onModuleDestroy).toBe('function');
-    expect(service.draftQuestion).toBeDefined();
+    expect(PrismaPg).toHaveBeenCalledTimes(1);
+    expect(PrismaPg).toHaveBeenCalledWith({ connectionString: 'postgresql://user:pass@localhost:5432/db' });
+    expect(connect).not.toHaveBeenCalled();
+    connect.mockRestore();
   });
 
   describe('lifecycle hooks', () => {

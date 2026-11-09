@@ -211,21 +211,23 @@ O CI define `NX_DAEMON=false`, `NX_NO_CLOUD=true` e um `DATABASE_URL` fictício 
 
 "Antes" = com `collectCoverageFrom` e threshold já ativos, antes dos testes novos.
 
-| Projeto | Antes (stmts / branch / func / lines) | Depois (stmts / branch / func / lines) |
-|---|---|---|
-| shared-domain | — | 93.22 / 100 / 96.29 / 92.72 |
-| shared-contracts | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
-| import-domain | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
-| import-application | 95.23 / **50** / 100 / 94.73 | 100 / 100 / 100 / 100 |
-| shared-prisma | 81.96 / 100 / **33.33** / 84.21 | 100 / 100 / 100 / 100 |
-| import-infra | 94.11 / 100 / **50** / 91.66 | 100 / 100 / 100 / 100 |
-| identity-domain | 100 / 95.83 / 100 / 100 | 100 / 95.83 / 100 / 100 |
-| identity-infra | 0/0 (sem código medido) | 0/0 |
-| identity-application | 0/0 (sem código nem testes; `passWithNoTests`) | 0/0 |
-| api | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
-| web | **25** / 100 / **33.33** / **28.57** | 100 / 100 / 100 / 100 |
+| Projeto | Antes (stmts / branch / func / lines) | Depois (stmts / branch / func / lines) | Fim da Semana 8, parte 2 (BDD) |
+|---|---|---|---|
+| shared-domain | — | 93.22 / 100 / 96.29 / 92.72 | 93.22 / 100 / 96.29 / 92.72 |
+| shared-contracts | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| import-domain | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| import-application | 95.23 / **50** / 100 / 94.73 | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| shared-prisma | 81.96 / 100 / **33.33** / 84.21 | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| import-infra | 94.11 / 100 / **50** / 91.66 | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| identity-domain | 100 / 95.83 / 100 / 100 | 100 / 95.83 / 100 / 100 | 100 / 96.42 / 100 / 100 |
+| identity-infra | 0/0 (sem código medido) | 0/0 | 89.47 / 83.33 / 100 / 88.23 |
+| identity-application | 0/0 (sem código nem testes; `passWithNoTests`) | 0/0 | 0/0 (só interface, token e classe de erro; `passWithNoTests`) |
+| api | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
+| web | **25** / 100 / **33.33** / **28.57** | 100 / 100 / 100 / 100 | 100 / 100 / 100 / 100 |
 
 Em negrito, abaixo de 80% antes dos testes novos. Nenhum projeto precisou baixar o threshold, então não há exceção a justificar.
+
+A última coluna foi medida na ponta da branch `semana8/bdd-verificadores` com `npx jest -c <jest.config> --coverage --coverageReporters=text` em cada projeto (linha "All files"). `identity-infra` passou a ter código medido com o `PrismaUserRepository`. As linhas não cobertas são o relançamento de erro que não é P2002 e o `return` do `save` bem-sucedido; nenhum dos 3 cenários BDD passa por elas (ver LOG-3). `identity-domain` subiu em branches com a validação de `createdAt`.
 
 **Testes novos** (unitários, sem banco):
 - `import-application` — `CreateDraftQuestionUseCase` relança erro que não é `DomainError` (ex.: `alternatives` malformado) e não persiste nada.
@@ -272,15 +274,40 @@ Evidências:
 
 ![Checks do PR #1](docs/evidencias/semana8-pr-checks.png)
 
+### Cenários BDD da S5 → testes (red/green/refactor)
+
+Os 3 cenários de `docs/specs/s5-identity-repositories.md` viraram um teste cada, em `libs/identity/infra/src/lib/user/prisma-user.repository.spec.ts` (`describe('S5 — identity repositories')`). O nome de cada teste é o título do cenário na spec. Rodam no CI sem PostgreSQL: só o delegate `prisma.user` é simulado (tabela em memória que responde pelo `where`, e um `create` que lança o `PrismaClientKnownRequestError` P2002 real quando o email repete). O código testado é o `PrismaUserRepository` real.
+
+| Cenário (nome do teste) | RED | GREEN | REFACTOR | Log |
+|---|---|---|---|---|
+| Scenario 1: Encontrar User existente por email (Caso Feliz) | `4a5d0fb` | `3755b89` | `d71dbaf` | [LOG-RED-GREEN-REFACTOR-1.md](LOG-RED-GREEN-REFACTOR-1.md) |
+| Scenario 2: Validação falha — Email não encontrado | `c765246` | `6aaee5e` | `67cba5f` | [LOG-RED-GREEN-REFACTOR-2.md](LOG-RED-GREEN-REFACTOR-2.md) |
+| Scenario 3: SaveUser falha — Email duplicado (Edge Case) | `a8ebb3d` | `fe699d0` | `2ae294e` | [LOG-RED-GREEN-REFACTOR-3.md](LOG-RED-GREEN-REFACTOR-3.md) |
+
+- **Commits de contrato** (`1eb6820`, `4e0b5c5`, `e4ac6d5`): antes dos REDs 1 e 3 entraram só tipos e assinaturas sem comportamento (port `UserRepository`, `DuplicateEmailError`, model `User` + migration, `createdAt` no `User`). Assim o RED falha pelo comportamento do cenário, e não por import ou tipo inexistente. No cenário 1, o primeiro RED falhou por erro de tipo; o contrato foi corrigido num commit separado (`4e0b5c5`) e o RED, refeito. Está registrado no LOG-1.
+- **Limitação registrada:** a cláusula "nenhuma alteração é feita no banco" do cenário 3 não é verificável sem PostgreSQL; ver LOG-3.
+- **Migration** `20261109190000_create_users` gerada com `prisma migrate diff` (sem banco). `prisma generate`, build e typecheck seguem verdes.
+- A implementação seguiu os nomes e caminhos do contexto `import`, não os do ADR-003. A nota está no próprio ADR.
+
+### Teste que não prova nada
+
+[TESTE-QUE-NAO-PROVA-NADA.md](TESTE-QUE-NAO-PROVA-NADA.md): `PrismaService` › "builds a client without connecting when DATABASE_URL is set", escrito nesta mesma semana. É o padrão 3 (cobertura alta sem valor). Com o construtor ignorando a `DATABASE_URL` e apontando para outro banco, os 5 testes ficavam verdes e a cobertura seguia em 100%. Corrigido em `629a0a7`; agora a mesma quebra derruba o teste.
+
+### Parágrafo para o dono do negócio
+
+
+### Sensor que mais vai me salvar
+
+
 ---
 
 ## Marco 3.1 — Identity Repositories (Implementação)
 
 | Item | Status | Localização | O quê |
 |---|---|---|---|
-| **User Repository** | ⏳ Planejado | `libs/identity/application/src/repositories/user.repository.ts` | FindByEmail, FindById, Save com porta |
+| **User Repository** | 🔄 Parcial (Semana 8) | `libs/identity/application/src/lib/ports/user.repository.ts` | `findByEmail` e `save` (os métodos dos cenários BDD); `findById` pendente |
 | **Organization Repository** | ⏳ Planejado | `libs/identity/application/src/repositories/organization.repository.ts` | Similar pra Organization |
-| **Prisma Adapter** | ⏳ Planejado | `libs/identity/infra/src/adapters/prisma-user.adapter.ts` | Implementação real do repository |
+| **Prisma Adapter** | 🔄 Parcial (Semana 8) | `libs/identity/infra/src/lib/user/prisma-user.repository.ts` | `PrismaUserRepository` (`findByEmail`, `save` com P2002 → `DuplicateEmailError`); ainda não registrado no `IdentityInfraModule` |
 | **Testes** | ⏳ Planejado | `libs/identity/application.test.ts`, `libs/identity/infra.test.ts` | Unit + integration tests |
 
 **Baseado em:** S5 spec + S6 ADR/tasks

@@ -45,3 +45,13 @@ model Alternative {
   @@id([draftQuestionId, letter])
   @@map("alternatives")
 }
+
+// Identidade global (contexto identity). Sem organizationId: o vínculo é a Membership.
+model User {
+  id        String   @id
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
