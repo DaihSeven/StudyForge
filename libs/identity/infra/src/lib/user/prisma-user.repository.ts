@@ -18,7 +18,6 @@ export class PrismaUserRepository implements UserRepository {
 
   async findByEmail(email: string): Promise<User | null> {
     const row = await this.prisma.user.findUnique({ where: { email } });
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return toDomain(row!);
+    return row ? toDomain(row) : null;
   }
 }
