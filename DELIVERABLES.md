@@ -303,9 +303,11 @@ Os 3 cenários de `docs/specs/s5-identity-repositories.md` viraram um teste cada
 
 ### Parágrafo para o dono do negócio
 
+Configurei o StudyForge para que nenhuma mudança chegue à versão oficial sem passar por cinco checagens automáticas. Elas verificam se o código segue as regras combinadas, se não tem erros escondidos, se monta como um produto completo, se continua funcionando o que já está garantido (como cadastrar uma questão ou buscar um usuário pelo email) e se não traz peças de terceiros com falhas de segurança conhecidas. Se qualquer checagem falhar, o GitHub, que é onde o código fica guardado, bloqueia a publicação até alguém corrigir: não é um aviso que dá para ignorar, é uma trava. Isso é diferente de confiar que alguém vai lembrar de testar, porque lembrar depende de memória e de pressa, e a trava funciona igual em qualquer dia, inclusive quando a mudança foi escrita por uma IA.
 
 ### Sensor que mais vai me salvar
 
+Acho que o sensor que mais vai me salvar é o lint, porque ele também vigia as fronteiras entre as partes do StudyForge (enforce-module-boundaries). A regra central do projeto é que o núcleo de quiz nunca conheça a origem do conteúdo, seja PDF, texto ou IA, e que a importação nunca dependa do quiz. Um agente de IA pode quebrar essa regra sem perceber, só importando a classe mais conveniente, e os testes continuariam verdes. O lint pega isso na hora e bloqueia o merge. Em segundo lugar vem o teste com cobertura mínima de 80%, mas só se os testes verificarem comportamento, como aprendi com o teste que não provava nada, o teste do prisma.service continuou verde mesmo com o código quebrado, e só percebi porque quebrei de propósito.
 
 ---
 
