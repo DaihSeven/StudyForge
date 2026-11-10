@@ -211,8 +211,10 @@ estruturado, publicação e execução de quiz.
 - Marco 3.6: execução pelo aluno (responder e calcular resultado)
 
 **Etapa 4 — Cursos e novos formatos** *(planejada)*
+- Banco de questões e simulados por certificação ([ADR-008](docs/adrs/adr-008-banco-de-questoes-por-certificacao.md)), primeiro item da etapa, depois de quiz, publicação e execução.
 - Contexto `course` (scaffold + domain models), fora do MVP 1 porque nenhum fluxo do MVP depende dele (ver [ADR-006](docs/adrs/adr-006-course-fora-do-mvp1.md)).
 - Importers de PDF e DOCX (candidatas gratuitas: `pdfjs-dist` ou `pdf-parse`, e `mammoth`), só para materiais que sigam o modelo estruturado.
+- Organização pessoal, visibilidade e moderação ([ADR-007](docs/adrs/adr-007-organizacao-pessoal-visibilidade-e-moderacao.md)), a implementar depois do Marco 3.5.
 
 ## 9. Decisões
 
@@ -222,6 +224,8 @@ estruturado, publicação e execução de quiz.
 - **Importers de PDF e DOCX:** ficam para depois do MVP 1 (Etapa 4), só para materiais que sigam o modelo. [ADR-004](docs/adrs/adr-004-importacao-por-modelo-estruturado.md)
 - **Entrada em organização:** convite por link com token e `Invitation`; no MVP o professor copia e envia o link, e o envio automático de email fica para depois. [ADR-005](docs/adrs/adr-005-convite-por-link-com-token.md)
 - **Contexto `course`:** sai do MVP 1 e vai para a Etapa 4. [ADR-006](docs/adrs/adr-006-course-fora-do-mvp1.md)
+- **Organização pessoal, visibilidade e moderação:** todo usuário tem organização pessoal automática; simulados são `PRIVATE`, `UNLISTED` ou `PUBLIC`; o admin da plataforma (`platformRole` no `User`) modera. Depois do Marco 3.5. [ADR-007](docs/adrs/adr-007-organizacao-pessoal-visibilidade-e-moderacao.md)
+- **Banco de questões e simulados por certificação:** banco mantido só pelo admin da plataforma, numa organização da plataforma; simulados de 25 ou 65 questões por sorteio estratificado por domínio, com cotas pelo método do maior resto. Primeiro item da Etapa 4. [ADR-008](docs/adrs/adr-008-banco-de-questoes-por-certificacao.md)
 
 ### Decisões em aberto
 
