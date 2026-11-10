@@ -3,7 +3,7 @@
 > Plataforma de estudos para criação, edição, publicação e execução de simulados,
 > construída a partir de material fornecido pelo mentor em formatos variados.
 
-Status: **Etapa 2 — Primeiro artefato.** Marcos 2.1–2.5 concluídos; contexto `identity` scaffoldado.
+Status: **Etapa 2 concluída** (Marcos 2.1–2.6: fluxo `DraftQuestion` ponta a ponta e contexto `identity` scaffoldado). **Etapa 3 (MVP 1) é a próxima**; o Marco 3.1 está parcial (`UserRepository` com `findByEmail` e `save`).
 
 ---
 
@@ -17,7 +17,8 @@ em simulados interativos sem forçar o conteúdo a um formato rígido de entrada
 ## 2. Visão do produto
 
 Uma plataforma onde o mentor fornece conteúdo em formatos variados (inicialmente
-texto colado; futuramente PDF, JSON e documentos), e o sistema transforma esse
+por modelo estruturado (JSON e Markdown), com um modelo para baixar e preencher;
+futuramente PDF e DOCX que sigam esse modelo), e o sistema transforma esse
 material em uma estrutura de questões editável — sempre revisável pelo mentor antes
 de qualquer publicação.
 
@@ -96,9 +97,9 @@ studyforge/
 │   │   ├── contracts/   # DTOs/Zod schemas (CreateDraftQuestionCommandSchema)
 │   │   └── prisma/      # PrismaService centralizado
 │   ├── identity/        # ✅ NOVO (Etapa 2, Marco 2.6)
-│   │   ├── domain/      # User, Organization, Membership, MembershipRole (21 testes)
-│   │   ├── application/ # estrutura vazia (ports/, use-cases/ — implementação Etapa 3)
-│   │   └── infra/       # IdentityInfraModule vazio (implementação Etapa 3)
+│   │   ├── domain/      # User (com createdAt), Organization, Membership, MembershipRole
+│   │   ├── application/ # port UserRepository, DuplicateEmailError (use cases na Etapa 3)
+│   │   └── infra/       # PrismaUserRepository (ainda não registrado no IdentityInfraModule)
 │   ├── quiz/            # ⏳ TODO (Etapa 3)
 │   │   ├── domain/
 │   │   ├── application/
@@ -108,13 +109,13 @@ studyforge/
 │       ├── application/ # CreateDraftQuestionUseCase, ports (IdGenerator, DraftQuestionRepository)
 │       └── infra/       # CryptoIdGeneratorAdapter, PrismaDraftQuestionRepository, ImportInfraModule
 ├── prisma/
-│   ├── schema.prisma    # models: DraftQuestion, Alternative; Prisma 7.10 + pg adapter
-│   ├── prisma.config.ts # DATABASE_URL via env
-│   └── migrations/      # 20261001231755_init
+│   ├── schema.prisma    # models: User, DraftQuestion, Alternative; Prisma 7.10 + pg adapter
+│   └── migrations/      # 20261001231755_init, 20261109190000_create_users
+├── prisma.config.ts     # DATABASE_URL via env (na raiz do repositório)
 └── nx.json
 ```
 
-**Estrutura-alvo (Etapa 3+):** Adicionar `quiz` (domain + application + infra) e `course`.
+**Estrutura-alvo:** adicionar `quiz` (domain + application + infra) na Etapa 3 e `course` na Etapa 4.
 
 ### 4.2 Fronteiras protegidas
 
@@ -147,10 +148,9 @@ Não implementados neste momento: dissertativa, verdadeiro/falso.
 
 ## 6. Multi-tenancy
 
-- Mentor pode criar uma organização ou escolher uma existente.
-- Estudante pode escolher uma organização disponível para participar.
+- Mentor cria uma organização.
 - Todo acesso a dados respeita o vínculo do usuário com a organização.
-- Detalhes de convite, aprovação ou código de entrada: a definir futuramente.
+- Entrada em uma organização é por convite com link (ver [ADR-005](docs/adrs/adr-005-convite-por-link-com-token.md)): o professor gera o convite e o aluno aceita após autenticar com Google OAuth, o que cria a `Membership`.
 
 ### 6.1 Modelo conceitual
 
@@ -180,7 +180,7 @@ estudante em outra) sem ambiguidade no modelo de dados.
 | ORM | Prisma |
 | Contratos/validação | Zod (`shared/contracts`) |
 | Autenticação | Google OAuth |
-| Extração de conteúdo (IA) | Abstraída via port `AiQuestionExtractor`; provedor (Claude/OpenAI/Gemini/Mistral) é decisão de infraestrutura, ainda em aberto |
+| Importação de conteúdo | Modelo estruturado (JSON e Markdown) validado com Zod, sem IA paga, via port `QuestionImporter`. A porta pode ganhar adaptadores de PDF/DOCX depois do MVP 1 (ver [ADR-004](docs/adrs/adr-004-importacao-por-modelo-estruturado.md)) |
 | Testes | Jest |
 
 ## 8. Roadmap por etapas
@@ -200,28 +200,39 @@ ponta a ponta: texto estruturado → `DraftQuestion` → persistência → consu
 - Marco 2.6 — contexto `identity`: User, Organization, Membership, MembershipRole (domínio scaffoldado) *(concluído)*
 
 **Etapa 3 — MVP 1** *(próxima)*
-Implementação das camadas application e infra dos contextos; publicação e execução de quiz.
+Implementação das camadas application e infra dos contextos, importação por modelo
+estruturado, publicação e execução de quiz.
 
-- Marco 3.1: Implementar repositories + migrations `identity` (UserRepository, OrganizationRepository)
-- Marco 3.2: Contexto `quiz` (scaffold + domain models: Quiz, Question, Attempt, Answer)
-- Marco 3.3: Contexto `course` (scaffold + domain models)
-- Marco 3.4: Quiz publishing (draft → publicado)
-- Marco 3.5: Student execution (responder quiz + cálculo de resultado)
+- Marco 3.1: fechar `identity` (`findById`, `OrganizationRepository`, `MembershipRepository`, entidade `Invitation`, migrations) e registrar os repositórios no `IdentityInfraModule` *(parcial: `UserRepository` com `findByEmail` e `save`)*
+- Marco 3.2: autenticação (Google OAuth) e fluxo de convite por link
+- Marco 3.3: importação por modelo estruturado (`JsonImporter` e `MarkdownImporter`, modelo para download, erros de validação por questão)
+- Marco 3.4: contexto `quiz` (scaffold + domain: Quiz, Question, Attempt, Answer)
+- Marco 3.5: publicação (`DraftQuestion` aprovado vira `Question`, ação explícita do mentor)
+- Marco 3.6: execução pelo aluno (responder e calcular resultado)
 
-## 9. Decisões em aberto
+**Etapa 4 — Cursos e novos formatos** *(planejada)*
+- Contexto `course` (scaffold + domain models), fora do MVP 1 porque nenhum fluxo do MVP depende dele (ver [ADR-006](docs/adrs/adr-006-course-fora-do-mvp1.md)).
+- Importers de PDF e DOCX (candidatas gratuitas: `pdfjs-dist` ou `pdf-parse`, e `mammoth`), só para materiais que sigam o modelo estruturado.
 
-- Provedor concreto de IA para `AiQuestionExtractor` (comparação futura entre Claude,
-  OpenAI, Gemini e Mistral por qualidade, capacidade de processar documentos, custo
-  por token e uso em volume).
-- Fluxo de convite/aprovação/código de entrada para organizações.
-- Momento de priorizar importers de PDF e DOCX (posterior ao MVP 1).
+## 9. Decisões
+
+### Decisões fechadas
+
+- **Sem IA paga:** a importação usa modelo estruturado (JSON/Markdown) validado com Zod; quem quiser pode pedir a uma IA externa que preencha o modelo. [ADR-004](docs/adrs/adr-004-importacao-por-modelo-estruturado.md)
+- **Importers de PDF e DOCX:** ficam para depois do MVP 1 (Etapa 4), só para materiais que sigam o modelo. [ADR-004](docs/adrs/adr-004-importacao-por-modelo-estruturado.md)
+- **Entrada em organização:** convite por link com token e `Invitation`; no MVP o professor copia e envia o link, e o envio automático de email fica para depois. [ADR-005](docs/adrs/adr-005-convite-por-link-com-token.md)
+- **Contexto `course`:** sai do MVP 1 e vai para a Etapa 4. [ADR-006](docs/adrs/adr-006-course-fora-do-mvp1.md)
+
+### Decisões em aberto
+
+Nenhuma no momento.
 
 ## 📋 Documentação de Atividades
 
 Ver **[DELIVERABLES.md](./DELIVERABLES.md)** para histórico completo:
-- **Semanas 1–4 (S1–S4):** Entregues ✅
-- **Semanas 5–7 (S5–S7):** Em progresso 🔄
-- **Marcos 3.1–3.4:** Planejados ⏳
+- **Semanas 1 a 8 (S1–S8):** entregues ✅, exceto a Semana 7 (3 specs de quiz), que segue como está no DELIVERABLES.md (🔄 planejada)
+- **Marco 3.1:** parcial 🔄 (Semana 8)
+- **Marcos 3.2–3.6:** planejados ⏳
 
 Inclui:
 - Status de cada entregável

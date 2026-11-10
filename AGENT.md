@@ -45,7 +45,7 @@ Não existe ainda:
 - Endpoints para `identity` (criar organização, criar usuário, gerenciar membership)
 - Autenticação/autorização (OAuth, JWT) — identity context isolado, sem login ainda
 - Importadores de PDF/DOCX (apenas texto estruturado em POST /api/draft-questions por enquanto)
-- Extração via IA (port AiQuestionExtractor existe em design, mas não implementada)
+- Importação por modelo estruturado JSON/Markdown via port QuestionImporter (ver ADR-004), ainda não implementada
 - Quiz: criação, publicação, execução, resultado do estudante (Etapa 3)
 - Banco de dados real conectado (`DATABASE_URL` em `.env.local` com Neon ou local PostgreSQL)
 

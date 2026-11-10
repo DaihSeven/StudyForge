@@ -90,9 +90,8 @@ viola essas regras, deve corrigi-la ou sinalizar, não ignorar.
 
 - Adicionar microserviços, filas de mensagens, ou múltiplos bancos de dados.
 - Adicionar importers de PDF/DOCX antes da Etapa em que forem priorizados.
-- Escolher um provedor de IA concreto para `AiQuestionExtractor` — isso é uma
-  decisão de produto/infra ainda em aberto (comparação futura entre Claude,
-  OpenAI, Gemini, Mistral).
+- Adicionar IA paga ou dependência externa de provedor de IA ao projeto (decisão
+  fechada no ADR-004: importação por modelo estruturado, sem IA paga).
 - Introduzir novos tipos de questão (dissertativa, verdadeiro/falso) no MVP.
 - Implementar lógica de convite/aprovação/código de entrada de organização —
   ainda não definida.

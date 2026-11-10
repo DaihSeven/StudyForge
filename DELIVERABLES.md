@@ -179,7 +179,7 @@ Claude Code: "Validate this spec against identity bounded context"
 **O que é:**
 - 3 specs novas (não identity, mas quiz)
 - Validação de conflitos entre eles (ubíqua language)
-- Prepara pra implementação em Marco 3.2–3.4
+- Prepara pra implementação em Marco 3.4–3.6
 
 ---
 
@@ -319,7 +319,7 @@ Acho que o sensor que mais vai me salvar é o lint, porque ele também vigia as 
 | **User Repository** | 🔄 Parcial (Semana 8) | `libs/identity/application/src/lib/ports/user.repository.ts` | `findByEmail` e `save` (os métodos dos cenários BDD); `findById` pendente |
 | **Organization Repository** | ⏳ Planejado | `libs/identity/application/src/repositories/organization.repository.ts` | Similar pra Organization |
 | **Prisma Adapter** | 🔄 Parcial (Semana 8) | `libs/identity/infra/src/lib/user/prisma-user.repository.ts` | `PrismaUserRepository` (`findByEmail`, `save` com P2002 → `DuplicateEmailError`); ainda não registrado no `IdentityInfraModule` |
-| **Testes** | ⏳ Planejado | `libs/identity/infra/src/lib/user/prisma-user.repository.spec.ts` | Unit + integration tests |
+| **Testes** | 🔄 Parcial (Semana 8) | `libs/identity/infra/src/lib/user/prisma-user.repository.spec.ts` | Unit + integration tests |
 
 **Baseado em:** S5 spec + S6 ADR/tasks
 
@@ -327,7 +327,24 @@ Acho que o sensor que mais vai me salvar é o lint, porque ele também vigia as 
 
 ---
 
-## Marco 3.2 — Quiz Context Scaffold + Domain
+## Marco 3.2 — Autenticação e convite por link
+
+| Item | Status | Localização | O quê |
+|---|---|---|---|
+| **Google OAuth** | ⏳ Planejado | — | Autenticação |
+| **Fluxo de convite** | ⏳ Planejado | — | Professor gera `Invitation`, aluno aceita e a `Membership` é criada ([ADR-005](docs/adrs/adr-005-convite-por-link-com-token.md)) |
+
+---
+
+## Marco 3.3 — Importação por modelo estruturado
+
+| Item | Status | Localização | O quê |
+|---|---|---|---|
+| **Importers** | ⏳ Planejado | — | `JsonImporter` e `MarkdownImporter`, modelo para download, erros de validação por questão ([ADR-004](docs/adrs/adr-004-importacao-por-modelo-estruturado.md)) |
+
+---
+
+## Marco 3.4 — Quiz Context Scaffold + Domain
 
 | Item | Status | Localização | O quê |
 |---|---|---|---|
@@ -342,7 +359,7 @@ Acho que o sensor que mais vai me salvar é o lint, porque ele também vigia as 
 
 ---
 
-## Marco 3.3–3.4 — Quiz Application + Execution
+## Marco 3.5–3.6 — Publicação + Execução
 
 | Item | Status | Localização | O quê |
 |---|---|---|---|
@@ -367,8 +384,10 @@ Acho que o sensor que mais vai me salvar é o lint, porque ele também vigia as 
 | **S7** | 3 Specs | 🔄 Planejado | `docs/specs/` |
 | **S8** | Verificadores | ✅ Entregue | `.github/workflows/ci.yml` + scripts + cobertura mínima |
 | **Marco 3.1** | Código | 🔄 Parcial (Semana 8) | `libs/identity/application` + `infra` |
-| **Marco 3.2** | Código | ⏳ Depois de S7 | `libs/quiz/domain` + `application` + `infra` |
-| **Marco 3.3–3.4** | Código | ⏳ Depois de 3.2 | `libs/quiz/` + `apps/api/` |
+| **Marco 3.2** | Código | ⏳ Depois de 3.1 | Autenticação (Google OAuth) + convite por link |
+| **Marco 3.3** | Código | ⏳ Depois de 3.2 | Importação por modelo estruturado |
+| **Marco 3.4** | Código | ⏳ Depois de S7 | `libs/quiz/domain` + `application` + `infra` |
+| **Marco 3.5–3.6** | Código | ⏳ Depois de 3.4 | `libs/quiz/` + `apps/api/` |
 
 ---
 
