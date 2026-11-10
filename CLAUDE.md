@@ -93,8 +93,8 @@ viola essas regras, deve corrigi-la ou sinalizar, não ignorar.
 - Adicionar IA paga ou dependência externa de provedor de IA ao projeto (decisão
   fechada no ADR-004: importação por modelo estruturado, sem IA paga).
 - Introduzir novos tipos de questão (dissertativa, verdadeiro/falso) no MVP.
-- Implementar lógica de convite/aprovação/código de entrada de organização —
-  ainda não definida.
+- Implementar lógica de aprovação ou código de entrada de organização — fora do
+  escopo. O convite por link já está decidido no ADR-005 (Marcos 3.1 e 3.2).
 - Pular a etapa de revisão do mentor entre `DraftQuestion` e `Question` publicada.
 
 ## 5. Fluxo de trabalho esperado neste repositório

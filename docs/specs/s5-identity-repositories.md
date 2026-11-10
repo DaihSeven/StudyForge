@@ -1,5 +1,7 @@
 # S5: Especificação — Identity Repositories
 
+> **Nota (2026-11-10):** a unicidade da `Membership` (invariante 5) e o `findById` (E2) foram redefinidos na [spec do Marco 3.1](marco-3-1-identity-completo.md). A unicidade passa a ser por (User, Organization), com um papel por organização no MVP, e o `findById` só será entregue no Marco 3.1. O restante deste documento não foi alterado.
+
 **Bounded Context:** `identity`  
 **Data:** 2026-10-13  
 **Status:** Especificação Completa  
