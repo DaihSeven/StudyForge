@@ -17,7 +17,8 @@ em simulados interativos sem forçar o conteúdo a um formato rígido de entrada
 ## 2. Visão do produto
 
 Uma plataforma onde o mentor fornece conteúdo em formatos variados (inicialmente
-texto colado; futuramente PDF, JSON e documentos), e o sistema transforma esse
+por modelo estruturado (JSON e Markdown), com um modelo para baixar e preencher;
+futuramente PDF e DOCX que sigam esse modelo), e o sistema transforma esse
 material em uma estrutura de questões editável — sempre revisável pelo mentor antes
 de qualquer publicação.
 
@@ -96,9 +97,9 @@ studyforge/
 │   │   ├── contracts/   # DTOs/Zod schemas (CreateDraftQuestionCommandSchema)
 │   │   └── prisma/      # PrismaService centralizado
 │   ├── identity/        # ✅ NOVO (Etapa 2, Marco 2.6)
-│   │   ├── domain/      # User, Organization, Membership, MembershipRole (21 testes)
-│   │   ├── application/ # estrutura vazia (ports/, use-cases/ — implementação Etapa 3)
-│   │   └── infra/       # IdentityInfraModule vazio (implementação Etapa 3)
+│   │   ├── domain/      # User (com createdAt), Organization, Membership, MembershipRole
+│   │   ├── application/ # port UserRepository, DuplicateEmailError (use cases na Etapa 3)
+│   │   └── infra/       # PrismaUserRepository (ainda não registrado no IdentityInfraModule)
 │   ├── quiz/            # ⏳ TODO (Etapa 3)
 │   │   ├── domain/
 │   │   ├── application/
@@ -108,9 +109,9 @@ studyforge/
 │       ├── application/ # CreateDraftQuestionUseCase, ports (IdGenerator, DraftQuestionRepository)
 │       └── infra/       # CryptoIdGeneratorAdapter, PrismaDraftQuestionRepository, ImportInfraModule
 ├── prisma/
-│   ├── schema.prisma    # models: DraftQuestion, Alternative; Prisma 7.10 + pg adapter
-│   ├── prisma.config.ts # DATABASE_URL via env
-│   └── migrations/      # 20261001231755_init
+│   ├── schema.prisma    # models: User, DraftQuestion, Alternative; Prisma 7.10 + pg adapter
+│   └── migrations/      # 20261001231755_init, 20261109190000_create_users
+├── prisma.config.ts     # DATABASE_URL via env (na raiz do repositório)
 └── nx.json
 ```
 
@@ -147,8 +148,7 @@ Não implementados neste momento: dissertativa, verdadeiro/falso.
 
 ## 6. Multi-tenancy
 
-- Mentor pode criar uma organização ou escolher uma existente.
-- Estudante pode escolher uma organização disponível para participar.
+- Mentor cria uma organização.
 - Todo acesso a dados respeita o vínculo do usuário com a organização.
 - Entrada em uma organização é por convite com link (ver [ADR-005](docs/adrs/adr-005-convite-por-link-com-token.md)): o professor gera o convite e o aluno aceita após autenticar com Google OAuth, o que cria a `Membership`.
 
