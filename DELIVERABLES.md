@@ -29,7 +29,7 @@ Skills available: 9+
 |---|---|---|---|
 | **CLAUDE.md** | ✅ Entregue | `CLAUDE.md` | Contexto do projeto, 8 regras, convenções técnicas |
 | **Esqueleto Nx** | ✅ Entregue | `apps/api`, `apps/web`, `libs/shared/`, `libs/import/` | Monorepo estruturado |
-| **DraftQuestion** | ✅ Entregue | `libs/import/domain/src/lib/draft-question.ts` | Entidade com 37 testes ✅ |
+| **DraftQuestion** | ✅ Entregue | `libs/import/domain/src/lib/draft-question.ts` | Entidade com 31 testes ✅ |
 | **Marcos 2.1–2.2** | ✅ Entregue | Commits 39edfcb, 9bf5584, d1391ac | Contratos e entidades |
 
 **O que é:**
@@ -40,7 +40,7 @@ Skills available: 9+
 **Como testar:**
 ```bash
 npx nx run-many -t lint test build
-npx nx test import-domain  # 26 testes
+npx nx test import-domain  # 31 testes
 ```
 
 **Commits:**
@@ -90,7 +90,7 @@ Skill: Scaffold quiz/domain, quiz/application, quiz/infra com ESLint
 
 | Item | Status | Localização | O quê |
 |---|---|---|---|
-| **MCP Server** | ✅ Entregue | `https://github.com/seu-usuario/studyforge-mcp-validator` | 4 tools: validate-architecture, validate-spec, validate-adr, detect-conflicts |
+| **MCP Server** | ✅ Entregue | `https://github.com/DaihSeven/studyforge-mcp-validator` | 4 tools: validate-architecture, validate-spec, validate-adr, detect-conflicts |
 | **Red Team** | ✅ 9 testes | `__tests__/red-team.test.ts` | 5 ataques bloqueados (node:crypto, scope boundaries, ubíqua language, contextos mistos, ADR incompleto) |
 | **SECURITY.md** | ✅ Docs | `SECURITY.md` | Defesas contra prompt injection |
 | **README.md** | ✅ Docs | `README.md` | Como usar, ferramentas, red team, testes |
@@ -122,11 +122,11 @@ feat: studyforge-mcp-validator — MCP com red team
 
 | Item | Status | Localização | O quê |
 |---|---|---|---|
-| **Spec** | ✅ Entregue | \`docs/specs/s5-identity-repositories.md\` | Ubíqua language: User, Organization, Membership, MembershipRole (+ 5 invariantes) |
+| **Spec** | ✅ Entregue | `docs/specs/s5-identity-repositories.md` | Ubíqua language: User, Organization, Membership, MembershipRole (+ 5 invariantes) |
 | **5 EARS Criteria** | ✅ Entregue | Spec completa | FindByEmail, FindById, Save, FindOrgById, FindMembershipsByOrg |
 | **3 BDD Scenarios** | ✅ Entregue | Spec completa | Caso feliz, not found, duplicate email |
 | **Validação MCP** | ⏳ S6 | MCP validator | Validar spec contra bounded context rules |
-| **Commit** | ✅ Entregue | — | \`docs(s5): spec identity repositories — ubíqua language + EARS + BDD\` |
+| **Commit** | ✅ Entregue | — | `docs(s5): spec identity repositories — ubíqua language + EARS + BDD` |
 
 **O que é:**
 - Especificação comportamental (sem implementação, apenas documento)
@@ -134,11 +134,11 @@ feat: studyforge-mcp-validator — MCP com red team
 - Validável com MCP validator (studyforge-mcp-validator)
 
 **Como testar (em S6+):**
-\`\`\`
+```
 Claude Code: "Validate this spec against identity bounded context"
 → MCP validator roda
 → Resultado: ✅ OK ou ❌ Erros
-\`\`\`
+```
 
 **Estrutura de linguagem ubíqua:**
 - User: Identidade global (mentor ou estudante)
@@ -191,6 +191,7 @@ Claude Code: "Validate this spec against identity bounded context"
 | **Alvo `typecheck`** | ✅ Entregue | `project.json` de cada projeto + `nx.json` | `tsc --noEmit` no tsconfig lib/app **e** no `tsconfig.spec.json` |
 | **Cobertura mínima** | ✅ Entregue | `jest.config.*` de cada projeto | `collectCoverageFrom` + `coverageThreshold.global` de 80% |
 | **CI** | ✅ Entregue | `.github/workflows/ci.yml` | 6 jobs em push/PR na `main` |
+| **PRs da entrega** | ✅ Entregue | [#1](https://github.com/DaihSeven/StudyForge/pull/1), [#2](https://github.com/DaihSeven/StudyForge/pull/2), [#4](https://github.com/DaihSeven/StudyForge/pull/4), [#5](https://github.com/DaihSeven/StudyForge/pull/5) | Verificadores de CI, cenários BDD, print do merge bloqueado e parágrafos finais |
 
 ### O que cada check garante
 
@@ -307,7 +308,7 @@ Configurei o StudyForge para que nenhuma mudança chegue à versão oficial sem 
 
 ### Sensor que mais vai me salvar
 
-Acho que o sensor que mais vai me salvar é o lint, porque ele também vigia as fronteiras entre as partes do StudyForge (enforce-module-boundaries). A regra central do projeto é que o núcleo de quiz nunca conheça a origem do conteúdo, seja PDF, texto ou IA, e que a importação nunca dependa do quiz. Um agente de IA pode quebrar essa regra sem perceber, só importando a classe mais conveniente, e os testes continuariam verdes. O lint pega isso na hora e bloqueia o merge. Em segundo lugar vem o teste com cobertura mínima de 80%, mas só se os testes verificarem comportamento, como aprendi com o teste que não provava nada, o teste do prisma.service continuou verde mesmo com o código quebrado, e só percebi porque quebrei de propósito.
+Acho que o sensor que mais vai me salvar é o lint, porque ele também vigia as fronteiras entre as partes do StudyForge (enforce-module-boundaries). A regra central do projeto é que o núcleo de quiz nunca conheça a origem do conteúdo, seja PDF, texto ou IA, e que a importação nunca dependa do quiz. Um agente de IA pode quebrar essa regra sem perceber, só importando a classe mais conveniente, e os testes continuariam verdes. O lint pega isso na hora e bloqueia o merge. Em segundo lugar vem o teste com cobertura mínima de 80%, mas só se os testes verificarem comportamento, como aprendi com o teste que não provava nada: o teste do `prisma.service` continuou verde mesmo com o código quebrado, e só percebi porque quebrei de propósito.
 
 ---
 
@@ -318,11 +319,11 @@ Acho que o sensor que mais vai me salvar é o lint, porque ele também vigia as 
 | **User Repository** | 🔄 Parcial (Semana 8) | `libs/identity/application/src/lib/ports/user.repository.ts` | `findByEmail` e `save` (os métodos dos cenários BDD); `findById` pendente |
 | **Organization Repository** | ⏳ Planejado | `libs/identity/application/src/repositories/organization.repository.ts` | Similar pra Organization |
 | **Prisma Adapter** | 🔄 Parcial (Semana 8) | `libs/identity/infra/src/lib/user/prisma-user.repository.ts` | `PrismaUserRepository` (`findByEmail`, `save` com P2002 → `DuplicateEmailError`); ainda não registrado no `IdentityInfraModule` |
-| **Testes** | ⏳ Planejado | `libs/identity/application.test.ts`, `libs/identity/infra.test.ts` | Unit + integration tests |
+| **Testes** | ⏳ Planejado | `libs/identity/infra/src/lib/user/prisma-user.repository.spec.ts` | Unit + integration tests |
 
 **Baseado em:** S5 spec + S6 ADR/tasks
 
-**Quando:** Após S6
+**Quando:** Parcial na Semana 8; faltam findById e os repositórios de Organization/Membership
 
 ---
 
@@ -362,10 +363,10 @@ Acho que o sensor que mais vai me salvar é o lint, porque ele também vigia as 
 | **S3** | Docs + Skill | ✅ Entregue | AGENT.md + bounded-context-scaffolder |
 | **S4** | MCP | ✅ Entregue | GitHub externo (studyforge-mcp-validator) |
 | **S5** | **Spec** | ✅ Entregue | `docs/specs/s5-identity-repositories.md` | Ubíqua language (User, Org, Membership), 5 EARS, 3 BDD scenarios |
-| **S6** | ADR + Tasks | 🔄 Planejado | `docs/adrs/` + `docs/tasks/` |
+| **S6** | ADR + Tasks | ✅ Entregue | `docs/adrs/` + `docs/tasks/` |
 | **S7** | 3 Specs | 🔄 Planejado | `docs/specs/` |
 | **S8** | Verificadores | ✅ Entregue | `.github/workflows/ci.yml` + scripts + cobertura mínima |
-| **Marco 3.1** | Código | ⏳ Depois de S6 | `libs/identity/application` + `infra` |
+| **Marco 3.1** | Código | 🔄 Parcial (Semana 8) | `libs/identity/application` + `infra` |
 | **Marco 3.2** | Código | ⏳ Depois de S7 | `libs/quiz/domain` + `application` + `infra` |
 | **Marco 3.3–3.4** | Código | ⏳ Depois de 3.2 | `libs/quiz/` + `apps/api/` |
 
@@ -383,9 +384,10 @@ docs/
 │ ├── adr-001-monorepo-nx.md
 │ ├── adr-002-ddd-bounded-context.md
 │ └── adr-003-identity-repositories.md
-└── tasks/ # Task lists (S6+)
-├── s6-identity-implementation.md
-└── s6-identity-rpi-evidence.md
+├── tasks/ # Task lists (S6+)
+│ └── s6-identity-implementation-tasks.md
+└── rpi/ # Evidências RPI
+  └── s6-identity-rpi-evidence.md
 ```
 
 ---
