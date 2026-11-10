@@ -70,6 +70,16 @@ O README dizia que os detalhes de convite, aprovação ou código de entrada est
 
 ---
 
+## Nota de detalhamento (2026-11-10, spec do Marco 3.1)
+
+- **Validade padrão:** 7 dias.
+- **Token:** 32 bytes aleatórios; no banco fica só o **SHA-256** do token (hash feito pelo use case via port `TokenHasher`).
+- **Status `EXPIRED`:** calculado a partir de `expiresAt`, não persistido. No banco ficam `PENDING`, `ACCEPTED` e `REVOKED`.
+
+Decisões completas em [`docs/specs/marco-3-1-identity-completo.md`](../specs/marco-3-1-identity-completo.md), seção 7.
+
+---
+
 ## Related ADRs
 
 - **ADR-003:** Identity repositories

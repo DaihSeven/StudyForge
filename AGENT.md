@@ -12,7 +12,8 @@ específicas registradas no `CLAUDE.md` e no `README.md` prevalecem.
 
 O projeto está na **Etapa 2 — Primeiro artefato**, com os **Marcos 2.1–2.5**
 concluídos e o contexto `identity` scaffoldado (domínio completo com 21 testes;
-application e infra estruturados mas vazios). Existe hoje:
+application e infra com o `UserRepository`, o `PrismaUserRepository` e o model `User`;
+restante de application/infra do `identity` ainda por fazer). Existe hoje:
 
 - monorepo Nx 23 com 11 projetos
 - `apps/api` (NestJS 11): ZodValidationPipe, POST /api/draft-questions endpoint com validação Zod
@@ -27,10 +28,10 @@ application e infra estruturados mas vazios). Existe hoje:
   - `libs/import/infra`: CryptoIdGeneratorAdapter, PrismaDraftQuestionRepository, ImportInfraModule
 - **identity context** (Marco 2.6, novo):
   - `libs/identity/domain`: User, Organization, Membership, MembershipRole (21 testes, sem organizationId em User)
-  - `libs/identity/application`: estrutura vazia (ports/, use-cases/)
-  - `libs/identity/infra`: IdentityInfraModule vazio
-- Prisma 7.10 com schema: models DraftQuestion (com alternativas compostas) e Alternative
-- Migração criada: 20261001231755_init
+  - `libs/identity/application`: port `UserRepository` e `DuplicateEmailError` (use-cases/ ainda vazio)
+  - `libs/identity/infra`: `PrismaUserRepository` (ainda não registrado no `IdentityInfraModule`, que segue vazio)
+- Prisma 7.10 com schema: models User, DraftQuestion (com alternativas compostas) e Alternative
+- Migrações criadas: 20261001231755_init, 20261109190000_create_users
 - ESLint: regras scope (shared, import, identity, api, web) e type (domain, application, infra, contracts)
 - 108 testes (shared-domain 26, import-domain 31, identity-domain 21, mais 30 de application/infra/api)
 - lint, test, build funcionando para todos os projetos
@@ -40,8 +41,8 @@ Não existe ainda:
 
 - `libs/quiz/domain`, `libs/quiz/application`, `libs/quiz/infra` (Etapa 3)
 - `libs/course/domain`, `libs/course/application`, `libs/course/infra` (Etapa 3)
-- **Camadas application e infra do contexto `identity`** (ports e adapters — Etapa 3)
-- Prisma models para `identity`: User, Organization, Membership (Etapa 3)
+- Restante das camadas application e infra do contexto `identity` (ports e adapters de Organization, Membership e Invitation — Etapa 3)
+- Prisma models `Organization`, `Membership` e `Invitation` (Etapa 3; o model `User` já existe)
 - Endpoints para `identity` (criar organização, criar usuário, gerenciar membership)
 - Autenticação/autorização (OAuth, JWT) — identity context isolado, sem login ainda
 - Importadores de PDF/DOCX (apenas texto estruturado em POST /api/draft-questions por enquanto)
