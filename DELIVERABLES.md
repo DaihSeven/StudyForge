@@ -274,6 +274,10 @@ Evidências:
 
 ![Checks do PR #1](docs/evidencias/semana8-pr-checks.png)
 
+- [Merge bloqueado em PR de teste](docs/evidencias/semana8-merge-bloqueado.png): PR de teste com um teste quebrado de propósito, fechado sem merge, que mostra o merge bloqueado pelos checks obrigatórios.
+
+![Merge bloqueado](docs/evidencias/semana8-merge-bloqueado.png)
+
 ### Cenários BDD da S5 → testes (red/green/refactor)
 
 Os 3 cenários de `docs/specs/s5-identity-repositories.md` viraram um teste cada, em `libs/identity/infra/src/lib/user/prisma-user.repository.spec.ts` (`describe('S5 — identity repositories')`). O nome de cada teste é o título do cenário na spec. Rodam no CI sem PostgreSQL: só o delegate `prisma.user` é simulado (tabela em memória que responde pelo `where`, e um `create` que lança o `PrismaClientKnownRequestError` P2002 real quando o email repete). O código testado é o `PrismaUserRepository` real.
@@ -283,6 +287,10 @@ Os 3 cenários de `docs/specs/s5-identity-repositories.md` viraram um teste cada
 | Scenario 1: Encontrar User existente por email (Caso Feliz) | `4a5d0fb` | `3755b89` | `d71dbaf` | [LOG-RED-GREEN-REFACTOR-1.md](LOG-RED-GREEN-REFACTOR-1.md) |
 | Scenario 2: Validação falha — Email não encontrado | `c765246` | `6aaee5e` | `67cba5f` | [LOG-RED-GREEN-REFACTOR-2.md](LOG-RED-GREEN-REFACTOR-2.md) |
 | Scenario 3: SaveUser falha — Email duplicado (Edge Case) | `a8ebb3d` | `fe699d0` | `2ae294e` | [LOG-RED-GREEN-REFACTOR-3.md](LOG-RED-GREEN-REFACTOR-3.md) |
+
+- **Evidência de CI:** [checks do PR #2, com os 3 cenários BDD e CI verde](docs/evidencias/semana8-pr2-checks.png).
+
+![Checks do PR #2](docs/evidencias/semana8-pr2-checks.png)
 
 - **Commits de contrato** (`1eb6820`, `4e0b5c5`, `e4ac6d5`): antes dos REDs 1 e 3 entraram só tipos e assinaturas sem comportamento (port `UserRepository`, `DuplicateEmailError`, model `User` + migration, `createdAt` no `User`). Assim o RED falha pelo comportamento do cenário, e não por import ou tipo inexistente. No cenário 1, o primeiro RED falhou por erro de tipo; o contrato foi corrigido num commit separado (`4e0b5c5`) e o RED, refeito. Está registrado no LOG-1.
 - **Limitação registrada:** a cláusula "nenhuma alteração é feita no banco" do cenário 3 não é verificável sem PostgreSQL; ver LOG-3.
