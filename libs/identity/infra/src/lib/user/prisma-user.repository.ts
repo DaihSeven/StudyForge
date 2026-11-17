@@ -26,6 +26,10 @@ export class PrismaUserRepository implements UserRepository {
     return row ? toDomain(row) : null;
   }
 
+  async findById(_id: EntityId): Promise<User | null> {
+    throw new Error('UserRepository.findById ainda não implementado.');
+  }
+
   async save(user: User): Promise<User> {
     try {
       await this.prisma.user.create({

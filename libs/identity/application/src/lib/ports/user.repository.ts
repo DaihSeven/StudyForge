@@ -1,9 +1,13 @@
 import { User } from '@studyforge/identity/domain';
+import { EntityId } from '@studyforge/shared/domain';
 
 /** Persistência de `User` (spec S5, ADR-003). A implementação (Prisma) fica na infra. */
 export interface UserRepository {
   /** Busca um usuário pelo email. Devolve `null` quando não existe (E1). */
   findByEmail(email: string): Promise<User | null>;
+
+  /** Busca um usuário pelo id. Devolve `null` quando não existe, sem lançar erro (Marco 3.1, M1). */
+  findById(id: EntityId): Promise<User | null>;
 
   /**
    * Persiste o usuário e o devolve. Lança `DuplicateEmailError` se o email já pertence a
