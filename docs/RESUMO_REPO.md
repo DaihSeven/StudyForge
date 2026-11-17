@@ -200,7 +200,7 @@ Estado: o run do PR #11 terminou com os 7 checks em sucesso. O `npm audit` de pr
 | Marco 3.6 | execução pelo aluno: planejado |
 | Etapa 4 | `course`, importers PDF/DOCX, banco por certificação (ADR-008), organização pessoal e moderação (ADR-007): planejada |
 
-**Próximo passo:** implementar o Marco 3.1 conforme `docs/specs/marco-3-1-identity-completo.md` (`findById`, `OrganizationRepository`, `MembershipRepository`, entidade `Invitation` e repositório, models Prisma e migration, registro no `IdentityInfraModule`). Item do primeiro commit: atualizar o comentário de `libs/identity/domain/src/lib/organization.ts`, que ainda diz que o convite está fora de escopo.
+**Próximo passo:** responder as decisões em aberto do ADR-009 e da lista de tarefas (as que bloqueiam cada tarefa estão mapeadas no fim de `docs/tasks/marco-3-1-tarefas.md`) e implementar o Marco 3.1 na ordem T1 a T17 desse arquivo, começando por `UserRepository.findById` (T1: C01, C02). O comentário de `organization.ts` e as contagens (T0) já foram feitos no PR #12.
 
 ## 9. Specs e ADRs
 
@@ -217,8 +217,13 @@ Estado: o run do PR #11 terminou com os 7 checks em sucesso. O `npm audit` de pr
 - ADR-006: contexto `course` fora do MVP 1, vai para a Etapa 4.
 - ADR-007: organização pessoal automática, visibilidade `PRIVATE`/`UNLISTED`/`PUBLIC` e moderação por admin da plataforma.
 - ADR-008: banco de questões por certificação e simulados de 25 ou 65 questões por sorteio estratificado.
+- ADR-009 (`adr-009-persistencia-identity-marco-3-1.md`, **Proposed**): persistência do `identity` no Marco 3.1. Models `Organization`, `Membership` e `Invitation`, índices únicos (`Membership` por User e Organization, `Invitation.tokenHash`), `onDelete: Restrict` em todas as FKs, só o SHA-256 do token no banco, `EXPIRED` calculado, migration única do grupo e integração de C09, C11, C12 e C17 em `identity-infra` com `--parallel=1`. Traz 10 decisões em aberto.
 
-Outros documentos: `DELIVERABLES.md` (histórico por semana), `LOG-RED-GREEN-REFACTOR-1/2/3.md`, `docs/tasks/`, `docs/rpi/`, `docs/evidencias/`.
+**Tarefas** (`docs/tasks/`)
+
+- `marco-3-1-tarefas.md`: 18 tarefas ordenadas (T0 a T17), cada uma com objetivo, cenários C01–C29, arquivos esperados e critério de pronto. Marca as que precisam de banco (T16 e T17, só no CI). Substitui o checklist antigo `s6-identity-implementation-tasks.md`.
+
+Outros documentos: `DELIVERABLES.md` (histórico por semana), `LOG-RED-GREEN-REFACTOR-1/2/3.md`, `docs/rpi/`, `docs/evidencias/`.
 
 ## 10. Decisões em aberto mais relevantes
 
