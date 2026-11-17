@@ -12,8 +12,9 @@ permissions:
 env:
   NX_DAEMON: "false"
   NX_NO_CLOUD: "true"
-  # Fictício: o prisma generate (dependência de build/test) lê DATABASE_URL via prisma.config.ts.
-  # Nenhum job abre conexão; o test-integration (PostgreSQL real) não roda no CI.
+  # Credenciais descartáveis de teste, não são segredo. O prisma.config.ts lê DATABASE_URL do
+  # ambiente (o dotenv não sobrescreve variável já definida). Só o job "Integration (Postgres)"
+  # abre conexão, contra o service container abaixo; os demais só rodam o prisma generate.
   DATABASE_URL: postgresql://ci:ci@localhost:5432/studyforge_ci
 
 jobs:
@@ -73,6 +74,37 @@ jobs:
           path: coverage/
           retention-days: 7
           if-no-files-found: ignore
+
+  integration:
+    # Não obrigatório no ruleset proteger-main.
+    name: Integration (Postgres)
+    needs: [lint, typecheck]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: studyforge_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d studyforge_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Aplicar migrations
+        run: npx prisma migrate deploy
+      - name: Testes de integração
+        run: npx nx run-many -t test-integration --output-style=static
 
   audit:
     name: "Dependency check: vulnerabilidade conhecida (npm audit)"
