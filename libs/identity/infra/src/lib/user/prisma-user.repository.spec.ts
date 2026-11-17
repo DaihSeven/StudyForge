@@ -109,18 +109,19 @@ describe('Marco 3.1 — UserRepository.findById', () => {
     createdAt: new Date('2026-11-10T10:00:00Z'),
   };
   let table: UserRow[];
+  let findUnique: jest.Mock;
   let repository: PrismaUserRepository;
 
   beforeEach(() => {
     table = [u1];
     // Tabela em memória que responde pelo `where` recebido: só acha a linha se a busca for
     // pelo id (uma busca por outro campo devolveria null e o C01 falharia).
-    const userDelegate = {
-      findUnique: jest.fn(async ({ where }: { where: { id?: string } }) => {
-        return table.find((row) => where.id !== undefined && row.id === where.id) ?? null;
-      }),
-    };
-    repository = new PrismaUserRepository({ user: userDelegate } as unknown as PrismaService);
+    findUnique = jest.fn(async ({ where }: { where: { id?: string } }) => {
+      return table.find((row) => where.id !== undefined && row.id === where.id) ?? null;
+    });
+    repository = new PrismaUserRepository({
+      user: { findUnique },
+    } as unknown as PrismaService);
   });
 
   it('C01 — FindUserById retorna User quando o id existe', async () => {
@@ -129,6 +130,7 @@ describe('Marco 3.1 — UserRepository.findById', () => {
     const user = await repository.findById(EntityId.create('u-1'));
 
     // Then retorna o User com id, email, name e createdAt
+    expect(findUnique).toHaveBeenCalledWith({ where: { id: 'u-1' } });
     expect(user).toBeInstanceOf(User);
     expect(user?.id.value).toBe('u-1');
     expect(user?.email).toBe('aluno@escola.com');
@@ -141,5 +143,6 @@ describe('Marco 3.1 — UserRepository.findById', () => {
     // When chamo UserRepository.findById("u-x")
     // Then retorna null e nenhum erro é lançado
     await expect(repository.findById(EntityId.create('u-x'))).resolves.toBeNull();
+    expect(findUnique).toHaveBeenCalledWith({ where: { id: 'u-x' } });
   });
 });
