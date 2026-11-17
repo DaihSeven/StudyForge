@@ -5,7 +5,9 @@ import { Prisma, PrismaService } from '@studyforge/shared/prisma';
 import { PrismaUserRepository } from './prisma-user.repository';
 
 /**
- * Cenários BDD da spec S5 (docs/specs/s5-identity-repositories.md), um teste por cenário.
+ * Cenários BDD de `UserRepository`, um teste por cenário: os da spec S5
+ * (docs/specs/s5-identity-repositories.md) e C01/C02 da spec do Marco 3.1
+ * (docs/specs/marco-3-1-identity-completo.md).
  *
  * Roda sem PostgreSQL: o que é simulado é só a fronteira com o banco (o delegate
  * `prisma.user`), como uma tabela em memória que responde pelo `where` recebido. O
@@ -95,5 +97,52 @@ describe('S5 — identity repositories', () => {
     // And nenhuma alteração é feita no banco: sem PostgreSQL no CI, isso não é verificável
     // aqui de forma honesta (seria checar a tabela fake). Quem garante é o índice único
     // `users_email_key` da migration; ver LOG-RED-GREEN-REFACTOR-3.md.
+  });
+});
+
+/** Cenários C01 e C02 da spec do Marco 3.1 (docs/specs/marco-3-1-identity-completo.md, M1). */
+describe('Marco 3.1 — UserRepository.findById', () => {
+  const u1: UserRow = {
+    id: 'u-1',
+    email: 'aluno@escola.com',
+    name: 'Aluno',
+    createdAt: new Date('2026-11-10T10:00:00Z'),
+  };
+  let table: UserRow[];
+  let findUnique: jest.Mock;
+  let repository: PrismaUserRepository;
+
+  beforeEach(() => {
+    table = [u1];
+    // Tabela em memória que responde pelo `where` recebido: só acha a linha se a busca for
+    // pelo id (uma busca por outro campo devolveria null e o C01 falharia).
+    findUnique = jest.fn(async ({ where }: { where: { id?: string } }) => {
+      return table.find((row) => where.id !== undefined && row.id === where.id) ?? null;
+    });
+    repository = new PrismaUserRepository({
+      user: { findUnique },
+    } as unknown as PrismaService);
+  });
+
+  it('C01 — FindUserById retorna User quando o id existe', async () => {
+    // Given um User com id "u-1" existe
+    // When chamo UserRepository.findById("u-1")
+    const user = await repository.findById(EntityId.create('u-1'));
+
+    // Then retorna o User com id, email, name e createdAt
+    expect(findUnique).toHaveBeenCalledWith({ where: { id: 'u-1' } });
+    expect(user).toBeInstanceOf(User);
+    expect(user?.id.value).toBe('u-1');
+    expect(user?.email).toBe('aluno@escola.com');
+    expect(user?.name).toBe('Aluno');
+    expect(user?.createdAt).toEqual(new Date('2026-11-10T10:00:00Z'));
+  });
+
+  it('C02 — FindUserById retorna null quando o id não existe', async () => {
+    // Given nenhum User com id "u-x" existe
+    // When chamo UserRepository.findById("u-x")
+    // Then retorna null e nenhum erro é lançado
+    await expect(repository.findById(EntityId.create('u-x'))).resolves.toBeNull();
+    expect(findUnique).toHaveBeenCalledWith({ where: { id: 'u-x' } });
   });
 });
