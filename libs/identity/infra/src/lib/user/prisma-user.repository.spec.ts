@@ -5,7 +5,9 @@ import { Prisma, PrismaService } from '@studyforge/shared/prisma';
 import { PrismaUserRepository } from './prisma-user.repository';
 
 /**
- * Cenários BDD da spec S5 (docs/specs/s5-identity-repositories.md), um teste por cenário.
+ * Cenários BDD de `UserRepository`, um teste por cenário: os da spec S5
+ * (docs/specs/s5-identity-repositories.md) e C01/C02 da spec do Marco 3.1
+ * (docs/specs/marco-3-1-identity-completo.md).
  *
  * Roda sem PostgreSQL: o que é simulado é só a fronteira com o banco (o delegate
  * `prisma.user`), como uma tabela em memória que responde pelo `where` recebido. O

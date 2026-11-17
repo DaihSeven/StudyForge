@@ -21,14 +21,12 @@ function isUniqueConstraintViolation(error: unknown): boolean {
 export class PrismaUserRepository implements UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByEmail(email: string): Promise<User | null> {
-    const row = await this.prisma.user.findUnique({ where: { email } });
-    return row ? toDomain(row) : null;
+  findByEmail(email: string): Promise<User | null> {
+    return this.findUnique({ email });
   }
 
-  async findById(id: EntityId): Promise<User | null> {
-    const row = await this.prisma.user.findUnique({ where: { id: id.value } });
-    return row ? toDomain(row) : null;
+  findById(id: EntityId): Promise<User | null> {
+    return this.findUnique({ id: id.value });
   }
 
   async save(user: User): Promise<User> {
@@ -43,5 +41,11 @@ export class PrismaUserRepository implements UserRepository {
       throw error;
     }
     return user;
+  }
+
+  /** Busca por uma chave única (`id` ou `email`); `null` quando não há linha, sem lançar erro. */
+  private async findUnique(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
+    const row = await this.prisma.user.findUnique({ where });
+    return row ? toDomain(row) : null;
   }
 }
