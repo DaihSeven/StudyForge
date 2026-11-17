@@ -13,7 +13,9 @@ export interface OrganizationProps {
 
 /**
  * A organização (tenant). O próprio `id` é o `OrganizationId` que os recursos da organização
- * carregam. Convite/aprovação/código de entrada estão fora de escopo (CLAUDE.md §4).
+ * carregam. A entrada por convite com link (`Invitation`) faz parte do Marco 3.1 (ADR-005 e
+ * docs/specs/marco-3-1-identity-completo.md); aprovação e código de entrada seguem fora de
+ * escopo (CLAUDE.md §4).
  */
 export class Organization {
   private constructor(

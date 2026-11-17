@@ -27,13 +27,14 @@ restante de application/infra do `identity` ainda por fazer). Existe hoje:
   - `libs/import/application`: CreateDraftQuestionUseCase, ports (IdGenerator, DraftQuestionRepository)
   - `libs/import/infra`: CryptoIdGeneratorAdapter, PrismaDraftQuestionRepository, ImportInfraModule
 - **identity context** (Marco 2.6, novo):
-  - `libs/identity/domain`: User, Organization, Membership, MembershipRole (21 testes, sem organizationId em User)
+  - `libs/identity/domain`: User, Organization, Membership, MembershipRole (23 testes, sem organizationId em User)
   - `libs/identity/application`: port `UserRepository` e `DuplicateEmailError` (use-cases/ ainda vazio)
   - `libs/identity/infra`: `PrismaUserRepository` (ainda não registrado no `IdentityInfraModule`, que segue vazio)
 - Prisma 7.10 com schema: models User, DraftQuestion (com alternativas compostas) e Alternative
 - Migrações criadas: 20261001231755_init, 20261109190000_create_users
 - ESLint: regras scope (shared, import, identity, api, web) e type (domain, application, infra, contracts)
-- 108 testes (shared-domain 26, import-domain 31, identity-domain 21, mais 30 de application/infra/api)
+- 122 testes unitários (shared-domain 26, import-domain 31, identity-domain 23, mais 42 de contracts/prisma/application/infra/api/web), todos sem banco
+- CI (GitHub Actions) com o job **Integration (Postgres)**: service container `postgres:16` com credenciais descartáveis, `prisma migrate deploy` e `nx run-many -t test-integration`. O job não é obrigatório no ruleset `proteger-main`. O alvo `test-integration` tem padrões em `targetDefaults` do `nx.json` e hoje existe em `shared-prisma` (fumaça `SELECT 1`) e `import-infra`
 - lint, test, build funcionando para todos os projetos
 - skill `bounded-context-scaffolder` criada (gera novo bounded context com estrutura + proteções)
 
@@ -48,7 +49,7 @@ Não existe ainda:
 - Importadores de PDF/DOCX (apenas texto estruturado em POST /api/draft-questions por enquanto)
 - Importação por modelo estruturado JSON/Markdown via port QuestionImporter (ver ADR-004), ainda não implementada
 - Quiz: criação, publicação, execução, resultado do estudante (Etapa 3)
-- Banco de dados real conectado (`DATABASE_URL` em `.env.local` com Neon ou local PostgreSQL)
+- Banco de dados real no ambiente de desenvolvimento (`DATABASE_URL` em `.env.local` com Neon ou PostgreSQL local). No CI, o PostgreSQL existe só dentro do job Integration (Postgres)
 
 ## 2. Como este repositório evolui
 
@@ -95,8 +96,9 @@ npx nx graph
 PORT=3333 npx nx serve api   # http://localhost:3333/api (sem PORT, usa 3000)
 npx nx dev web               # http://localhost:3000
 
-# Testes de integração (com banco PostgreSQL real)
-npx nx run import-infra:test-integration
+# Testes de integração (com banco PostgreSQL real; *.integration.spec.ts ficam fora do `test`)
+npx nx run-many -t test-integration      # todos os projetos com o alvo (é o que o CI roda)
+npx nx run import-infra:test-integration # um projeto só
 
 # Testes de um bounded context específico
 npx nx run identity-domain:test
