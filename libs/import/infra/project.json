@@ -25,10 +25,6 @@
     },
     "test-integration": {
       "executor": "@nx/jest:jest",
-      "cache": false,
-      "dependsOn": [
-        "^prisma-generate"
-      ],
       "options": {
         "jestConfig": "libs/import/infra/jest.integration.config.cts",
         "runInBand": true
