@@ -1,6 +1,6 @@
 # Resumo do repositório
 
-Fotografia do estado do StudyForge em **2026-11-10**, na `main` (commit `a686dad`). Documento de apoio: a fonte de verdade sobre produto é o `README.md` e sobre como trabalhar no código é o `CLAUDE.md`. Não contém segredos, connection strings nem valores do `.env`.
+Fotografia do estado do StudyForge em **2026-11-17**, na `main` (commit `aa1d5f1`, merge do PR #11). Documento de apoio: a fonte de verdade sobre produto é o `README.md` e sobre como trabalhar no código é o `CLAUDE.md`. Não contém segredos, connection strings nem valores do `.env`.
 
 ## 1. Projeto
 
@@ -20,7 +20,7 @@ Regra arquitetural central: o núcleo de quiz nunca conhece a origem do conteúd
 | Testes | Jest 30 (ts-jest) |
 | Linguagem | TypeScript 6 |
 | Autenticação | Google OAuth (Marco 3.2, ainda não implementada) |
-| CI | GitHub Actions, Node 22 |
+| CI | GitHub Actions, Node 22; PostgreSQL 16 como service container no job de integração |
 
 ## 3. Estrutura de pastas (resumida)
 
@@ -46,6 +46,8 @@ Projetos Nx (11): `api`, `web`, `shared-domain`, `shared-contracts`, `shared-pri
 
 Ainda não existem: `libs/quiz/*` (Etapa 3) e `libs/course/*` (Etapa 4).
 
+Alvo Nx `test-integration` (testes `*.integration.spec.ts` contra PostgreSQL real): os padrões (`cache: false`, `dependsOn: prisma-generate`) ficam em `targetDefaults` do `nx.json`, e cada projeto declara o alvo com o próprio `jest.integration.config.cts`. Hoje existe em `shared-prisma` (fumaça `SELECT 1`) e `import-infra` (repositório de `DraftQuestion`). Os `jest.config.cts` de `shared-prisma`, `import-infra` e `identity-infra` excluem `*.integration.spec.ts` do alvo `test`.
+
 ## 4. Scripts do `package.json`
 
 | Script | Comando |
@@ -57,6 +59,8 @@ Ainda não existem: `libs/quiz/*` (Etapa 3) e `libs/course/*` (Etapa 4).
 | `test:cov` | `nx run-many -t test --coverage` |
 | `audit` | `npm audit --omit=dev --audit-level=high` |
 | `audit:full` | `npm audit --audit-level=high` |
+
+Não há script npm para integração. O alvo roda pelo Nx: `npx nx run-many -t test-integration` (exige `DATABASE_URL` de um PostgreSQL com as migrations aplicadas).
 
 ## 5. Como rodar
 
@@ -167,6 +171,11 @@ Workflow `.github/workflows/ci.yml`, disparado em `push` e `pull_request` para `
 | Test (`npm run test:cov`, publica o artefato `coverage`) | sim |
 | Dependency check: vulnerabilidade conhecida (npm audit) | sim |
 | Dependency check: revisão do PR (`dependency-review-action`) | não (roda e aparece no PR) |
+| Integration (Postgres) | não (roda e aparece no PR) |
+
+O job **Integration (Postgres)** (desde o PR #11) sobe um service container `postgres:16` com usuário, senha e banco descartáveis definidos no próprio workflow (não são secrets, sem Neon), espera o healthcheck `pg_isready`, roda `npm ci`, `npx prisma migrate deploy` e `npx nx run-many -t test-integration`. O `DATABASE_URL` vem do `env` do workflow: o `prisma.config.ts` lê `process.env.DATABASE_URL` e o `dotenv` não sobrescreve variável já definida. No PR #11 ele aplicou as 2 migrations e passou o teste de fumaça e os 2 testes de integração de `import-infra`.
+
+No total, um PR mostra **7 checks**, dos quais 5 são obrigatórios.
 
 Ruleset `proteger-main` (ativo, alvo: branch padrão):
 
@@ -175,7 +184,7 @@ Ruleset `proteger-main` (ativo, alvo: branch padrão):
 - Merge permitido por merge, squash ou rebase.
 - A política estrita de status (branch atualizada com a `main`) está desligada.
 
-Estado: os últimos 3 runs na `main` (merges dos PRs #7, #8 e #9) terminaram com sucesso. O `npm audit` de produção bloqueia; o completo (inclui dev) é informativo.
+Estado: o run do PR #11 terminou com os 7 checks em sucesso. O `npm audit` de produção bloqueia; o completo (inclui dev) é informativo.
 
 ## 8. Marcos
 
@@ -183,7 +192,7 @@ Estado: os últimos 3 runs na `main` (merges dos PRs #7, #8 e #9) terminaram com
 |---|---|
 | Etapa 1 — Fundação documental | concluída |
 | Etapa 2 — Marcos 2.1 a 2.6 (monorepo, domínio, application, infra, API REST, contexto `identity` scaffoldado) | concluída |
-| Etapa 3 — Marco 3.1 (fechar `identity`) | **parcial**: `UserRepository` com `findByEmail` e `save`, `PrismaUserRepository` (ainda não registrado no `IdentityInfraModule`), model e migration de `User`. Spec pronta, falta implementar. |
+| Etapa 3 — Marco 3.1 (fechar `identity`) | **parcial**: `UserRepository` com `findByEmail` e `save`, `PrismaUserRepository` (ainda não registrado no `IdentityInfraModule`), model e migration de `User`. Spec pronta, falta implementar. O CI já tem PostgreSQL para os cenários que precisam de banco (C09, C11, C12, C17). |
 | Marco 3.2 | autenticação (Google OAuth) e fluxo de convite por link: planejado |
 | Marco 3.3 | importação por modelo estruturado (JSON e Markdown): planejado |
 | Marco 3.4 | contexto `quiz` (scaffold e domain): planejado |
@@ -213,6 +222,12 @@ Outros documentos: `DELIVERABLES.md` (histórico por semana), `LOG-RED-GREEN-REF
 
 ## 10. Decisões em aberto mais relevantes
 
+Marco 3.1 (testes de integração em `identity-infra`):
+
+- Ao escrever C09, C11, C12 e C17, criar `libs/identity/infra/jest.integration.config.cts` e declarar o alvo `test-integration` no `project.json` de `identity-infra` (a exclusão de `*.integration.spec.ts` do alvo `test` já está feita). O job de integração pega o novo alvo sozinho.
+- Usar `--parallel=1` no passo `nx run-many -t test-integration` do job de integração. Todos os projetos usam o mesmo banco, o `runInBand` só vale dentro de cada projeto e o Nx roda projetos em paralelo. Isso funciona hoje porque cada teste usa uma organização própria, mas índices únicos globais (email de `User`) podem colidir entre projetos.
+- Tornar o job Integration (Postgres) obrigatório no `proteger-main` depois de alguns runs estáveis.
+
 ADR-007 (organização pessoal, visibilidade, moderação):
 
 - O que acontece com tentativas e resultados dos alunos quando um simulado é suspenso (sem decisão; LGPD).
@@ -237,5 +252,4 @@ A lista completa está no fim de cada ADR.
 - **`claude` fora do PATH depois de reconstruir o Codespace.** Se o comando não for encontrado, o binário fica em `/usr/local/share/npm-global/bin`; adicione ao PATH com `export PATH="$PATH:/usr/local/share/npm-global/bin"` (e ao `~/.bashrc` para persistir).
 - **`npx jest` na raiz quebra por causa do `apps/web`.** O `jest.config.ts` da raiz reúne os projetos, e o `jest.config.cts` do `web` chama o `next/jest`, que procura `app/` ou `pages/` a partir do diretório atual e falha com "Couldn't find any `pages` or `app` directory". Rode sempre pelo Nx: `npx nx test <projeto>` ou `npm run test`.
 - **O Prisma Client gerado não é versionado.** `libs/shared/prisma/src/generated/` é gerado pelo alvo `prisma-generate`. Ao rodar `jest` ou `tsc` direto, sem o Nx, ele pode não existir.
-- **Contagens de teste do `AGENT.md` estão desatualizadas** (cita 108 testes; hoje são 122).
-- **Sem banco no CI nem neste ambiente:** testes de `infra` usam delegate Prisma falso com erros reais do Prisma; garantias de índice único e transação só se provam com teste de integração em PostgreSQL.
+- **Banco só no job de integração do CI:** o CI tem PostgreSQL (service container) apenas no job Integration (Postgres). Localmente (Codespace) continua sem banco, então `test-integration` falha aqui por falta de conexão. Os testes do alvo `test` de `infra` usam delegate Prisma falso com erros reais do Prisma; garantias de índice único e transação só se provam com `*.integration.spec.ts` rodando no CI.
