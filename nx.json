@@ -11,6 +11,13 @@
         "^prisma-generate"
       ]
     },
+    "test-integration": {
+      "cache": false,
+      "dependsOn": [
+        "prisma-generate",
+        "^prisma-generate"
+      ]
+    },
     "lint": {
       "cache": true,
       "dependsOn": [
