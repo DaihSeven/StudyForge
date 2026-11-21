@@ -1,4 +1,4 @@
-import { AiConfigError, describeAiConfig, loadAiConfig } from './ai-config';
+import { AiConfigError, buildAiStartupWarnings, describeAiConfig, loadAiConfig } from './ai-config';
 
 const SECRET = 'gsk_super-secret-value';
 
@@ -7,7 +7,7 @@ describe('loadAiConfig', () => {
     const config = loadAiConfig({});
 
     expect(config).toMatchObject({ provider: 'mock', maxInputChars: 8000, dailyLimitPerMentor: 10 });
-    expect(config.dailyLimitGlobal).toBeGreaterThan(0);
+    expect(config.dailyLimitGlobal).toBe(40);
     expect(config.apiKey).toBeUndefined();
   });
 
@@ -86,5 +86,25 @@ describe('describeAiConfig', () => {
     expect(summary).toContain('groq');
     expect(summary).toContain('8000');
     expect(summary).not.toContain(SECRET);
+  });
+});
+
+describe('buildAiStartupWarnings', () => {
+  it('has no warning for the mock provider', () => {
+    expect(buildAiStartupWarnings(loadAiConfig({}))).toEqual([]);
+  });
+
+  it('warns that the endpoint has no authentication until Marco 3.2 when a real provider is on', () => {
+    const warnings = buildAiStartupWarnings(loadAiConfig({ AI_PROVIDER: 'groq', GROQ_API_KEY: SECRET }));
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain('endpoint sem autenticação até o Marco 3.2');
+    expect(warnings[0]).toContain('não expor publicamente');
+  });
+
+  it('never includes the key in a warning', () => {
+    const warnings = buildAiStartupWarnings(loadAiConfig({ AI_PROVIDER: 'groq', GROQ_API_KEY: SECRET }));
+
+    expect(warnings.join(' ')).not.toContain(SECRET);
   });
 });
