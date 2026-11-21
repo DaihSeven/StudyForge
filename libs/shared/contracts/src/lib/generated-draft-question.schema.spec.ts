@@ -22,7 +22,7 @@ describe('GeneratedDraftQuestionSchema', () => {
   });
 
   it('rejects a missing statement', () => {
-    const { statement: _statement, ...withoutStatement } = valid;
+    const withoutStatement = { type: valid.type, alternatives: valid.alternatives };
     expect(GeneratedDraftQuestionSchema.safeParse(withoutStatement).success).toBe(false);
   });
 
