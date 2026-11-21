@@ -81,3 +81,40 @@ export const sampleDraft = {
 };
 
 export const sampleDone = { draftCount: 1, rejectedCount: 0, usage: { mentor: 9, global: 39 } };
+
+/** Stream controlado pelo teste: `push` entrega um pedaço, `end` fecha. Permite observar o estado "gerando". */
+export function controlledStream() {
+  const encoder = new NodeTextEncoder();
+  const queue: Array<{ done: boolean; value?: Uint8Array }> = [];
+  let waiting: ((r: { done: boolean; value?: Uint8Array }) => void) | null = null;
+  const deliver = (item: { done: boolean; value?: Uint8Array }) => {
+    if (waiting) {
+      const resolve = waiting;
+      waiting = null;
+      resolve(item);
+    } else {
+      queue.push(item);
+    }
+  };
+  return {
+    response: {
+      ok: true,
+      status: 200,
+      body: {
+        getReader: () => ({
+          read: () =>
+            new Promise<{ done: boolean; value?: Uint8Array }>((resolve) => {
+              const next = queue.shift();
+              if (next) {
+                resolve(next);
+              } else {
+                waiting = resolve;
+              }
+            }),
+        }),
+      },
+    },
+    push: (chunk: string) => deliver({ done: false, value: encoder.encode(chunk) }),
+    end: () => deliver({ done: true }),
+  };
+}
