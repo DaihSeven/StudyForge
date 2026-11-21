@@ -149,14 +149,22 @@ Fora do escopo do curso. Registrada como **backlog pós-curso**: exigiria cripto
 
 ## Decisões em aberto
 
-Sem resposta. O responsável do projeto decide antes da tarefa correspondente.
+Resolvidas pela autora do projeto na Semana 11 (PR 2) ou ainda em aberto:
 
-1. **Onde guardar o contador de uso:** memória no curso; tabela depois? Quando migrar?
-2. **Fuso e horário do reset diário** do limite.
-3. **Hospedagem da API**, que define onde ficam as variáveis secretas de produção.
-4. **Aviso ao mentor e LGPD:** texto e momento do aviso de que o conteúdo vai para um provedor externo.
-5. **Tamanho máximo do texto de entrada** enviado ao provedor.
-6. **Capacidades do modelo gratuito escolhido:** confirmar que suporta tool calling, streaming e structured output.
+1. **Onde guardar o contador de uso — RESOLVIDA:** em memória no curso (adaptador `InMemoryAiUsageLimiterAdapter`). A tabela fica para o backlog pós-curso, junto com a chave própria do mentor. Continua valendo a consequência já listada: o contador zera a cada reinício e não é compartilhado entre instâncias.
+2. **Fuso e horário do reset diário — RESOLVIDA:** `America/Sao_Paulo`, meia-noite, dentro do adaptador do `Clock` (`SaoPauloClockAdapter`). O contador local é uma proteção aproximada: os provedores resetam as próprias cotas em horários próprios.
+3. **Hospedagem da API — EM ABERTO.** Define onde ficam as variáveis secretas de produção.
+4. **Aviso ao mentor e LGPD — EM ABERTO.** Texto e momento do aviso de que o conteúdo vai para um provedor externo (previsto para a interface, PR 3).
+5. **Tamanho máximo do texto de entrada — RESOLVIDA:** 8.000 caracteres, configurável por `AI_MAX_INPUT_CHARS`. A relação tokens/caractere é uma estimativa; reconferir no teste manual e no console do provedor.
+6. **Capacidades do modelo gratuito escolhido — RESOLVIDA (com ressalvas), conferida na documentação oficial da Groq em 2026-11-21:** `openai/gpt-oss-120b` lista Tool Use, JSON Object Mode e JSON Schema Mode, e o endpoint compatível com OpenAI aceita `stream`. Ressalvas que moldaram a implementação: (a) a Groq informa que **streaming e tool use não são suportados junto com Structured Outputs**, então a requisição leva `tools` e não leva `response_format`, e o JSON final é validado localmente com Zod; (b) a tabela do modelo diz "Parallel Tool Use: No", então a requisição envia `parallel_tool_calls: false`; (c) o formato dos chunks SSE do provedor (`delta.tool_calls`) não foi confirmado na leitura, então o adaptador chama o provedor sem `stream`, e o streaming SSE existe entre a API e o mentor (um evento por rascunho).
+
+### Decisões adicionais do PR 2
+
+7. **Geração com todos os itens rejeitados não devolve a cota.** A mensagem ao mentor (`notice` no evento `done`) explica que a tentativa contou.
+8. **Máximo de `quantity`: 10** por pedido.
+9. **Teto global padrão: 100 gerações/dia** (`AI_DAILY_LIMIT_GLOBAL`), escolhido para ficar abaixo da cota gratuita da Groq com tool calling; **a autora ainda deve confirmar o valor.**
+10. **Rodadas de correção:** no máximo 2 por questão (contadas pelo `question_number` que o modelo envia a `validar_questao`). Itens que continuam inválidos vão para `rejected`.
+11. **Adaptador `google`:** não implementado neste PR (exigiria dependência nova ou um segundo formato de API). `AI_PROVIDER=google` falha na subida com erro claro, sem cair em outro provedor.
 
 ---
 
