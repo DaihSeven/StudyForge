@@ -1,3 +1,5 @@
+export const MANUAL_IMPORT_HINT = 'Use a importação manual (JSON ou Markdown) para continuar.';
+
 export type AiProviderErrorCode =
   | 'AI_PROVIDER_RATE_LIMITED'
   | 'AI_PROVIDER_TIMEOUT'
