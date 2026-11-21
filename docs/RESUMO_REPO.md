@@ -218,6 +218,7 @@ Estado: o run do PR #11 terminou com os 7 checks em sucesso. O `npm audit` de pr
 - ADR-007: organização pessoal automática, visibilidade `PRIVATE`/`UNLISTED`/`PUBLIC` e moderação por admin da plataforma.
 - ADR-008: banco de questões por certificação e simulados de 25 ou 65 questões por sorteio estratificado.
 - ADR-009 (`adr-009-persistencia-identity-marco-3-1.md`, **Proposed**): persistência do `identity` no Marco 3.1. Models `Organization`, `Membership` e `Invitation`, índices únicos (`Membership` por User e Organization, `Invitation.tokenHash`), `onDelete: Restrict` em todas as FKs, só o SHA-256 do token no banco, `EXPIRED` calculado, migration única do grupo e integração de C09, C11, C12 e C17 em `identity-infra` com `--parallel=1`. Traz 10 decisões em aberto.
+- ADR-010 (`adr-010-ia-opcional-na-geracao-de-rascunhos.md`, **Proposed**): IA gratuita e opcional na geração de rascunhos, ajustando parcialmente o ADR-004. Port `QuestionDraftGenerator` com adaptadores `mock` (padrão), `groq` e `google`, chave só no servidor, ação só para `MENTOR` com provedor configurado e limite diário por mentor e global. O fluxo manual continua sendo o caminho principal. Traz 6 decisões em aberto.
 
 **Tarefas** (`docs/tasks/`)
 

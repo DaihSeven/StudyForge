@@ -15,7 +15,7 @@ Importar questões por um modelo estruturado (JSON e Markdown) validado com Zod,
 
 ## Status
 
-**Accepted** — decisão de produto tomada em 2026-11-10. Substitui a decisão em aberto sobre o provedor de IA do README e do CLAUDE.md.
+**Accepted** — decisão de produto tomada em 2026-11-10. Ajustado parcialmente pelo ADR-010 (IA gratuita e opcional). Substitui a decisão em aberto sobre o provedor de IA do README e do CLAUDE.md.
 
 ---
 

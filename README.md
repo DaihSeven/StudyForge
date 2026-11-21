@@ -180,7 +180,7 @@ estudante em outra) sem ambiguidade no modelo de dados.
 | ORM | Prisma |
 | Contratos/validação | Zod (`shared/contracts`) |
 | Autenticação | Google OAuth |
-| Importação de conteúdo | Modelo estruturado (JSON e Markdown) validado com Zod, sem IA paga, via port `QuestionImporter`. A porta pode ganhar adaptadores de PDF/DOCX depois do MVP 1 (ver [ADR-004](docs/adrs/adr-004-importacao-por-modelo-estruturado.md)) |
+| Importação de conteúdo | Modelo estruturado (JSON e Markdown) validado com Zod, IA gratuita e opcional (ADR-010), via port `QuestionImporter`. A porta pode ganhar adaptadores de PDF/DOCX depois do MVP 1 (ver [ADR-004](docs/adrs/adr-004-importacao-por-modelo-estruturado.md)) |
 | Testes | Jest |
 
 ## 8. Roadmap por etapas
@@ -220,7 +220,7 @@ estruturado, publicação e execução de quiz.
 
 ### Decisões fechadas
 
-- **Sem IA paga:** a importação usa modelo estruturado (JSON/Markdown) validado com Zod; quem quiser pode pedir a uma IA externa que preencha o modelo. [ADR-004](docs/adrs/adr-004-importacao-por-modelo-estruturado.md)
+- **IA gratuita e opcional (ADR-010):** a importação usa modelo estruturado (JSON/Markdown) validado com Zod; quem quiser pode pedir a uma IA externa que preencha o modelo. [ADR-004](docs/adrs/adr-004-importacao-por-modelo-estruturado.md)
 - **Importers de PDF e DOCX:** ficam para depois do MVP 1 (Etapa 4), só para materiais que sigam o modelo. [ADR-004](docs/adrs/adr-004-importacao-por-modelo-estruturado.md)
 - **Entrada em organização:** convite por link com token e `Invitation`; no MVP o professor copia e envia o link, e o envio automático de email fica para depois. [ADR-005](docs/adrs/adr-005-convite-por-link-com-token.md)
 - **Contexto `course`:** sai do MVP 1 e vai para a Etapa 4. [ADR-006](docs/adrs/adr-006-course-fora-do-mvp1.md)
