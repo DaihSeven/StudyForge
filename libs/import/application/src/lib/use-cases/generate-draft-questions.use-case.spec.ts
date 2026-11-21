@@ -1,6 +1,7 @@
 import { AiUsageLimitExceededError, DraftQuestion } from '@studyforge/import/domain';
 import { GeneratedDraftQuestion } from '@studyforge/shared/contracts';
 import { EntityId, err, ok, QuestionType, Result } from '@studyforge/shared/domain';
+import { GenerationFailedError, QuestionDraftGeneratorError } from '../errors/generation.errors';
 import { AiUsageLimiter, AiUsageRemaining } from '../ports/ai-usage-limiter.port';
 import { DraftQuestionRepository } from '../ports/draft-question.repository';
 import { IdGenerator } from '../ports/id-generator.port';
@@ -264,5 +265,51 @@ describe('GenerateDraftQuestionsUseCase', () => {
   it('has no notice when at least one draft was kept, nor when the generator emitted nothing', async () => {
     expect((await build([generated(), twoCorrect]).useCase.execute(command())).getOrThrow().notice).toBeUndefined();
     expect((await build([]).useCase.execute(command())).getOrThrow().notice).toBeUndefined();
+  });
+
+  describe('when the generator fails', () => {
+    const unavailable = new QuestionDraftGeneratorError('AI_PROVIDER_RATE_LIMITED', 'Limite do provedor.', true);
+
+    it('refunds the quota and says the attempt did not count when it fails before any response', async () => {
+      const { useCase, limiter } = build([], new FakeLimiter(), unavailable);
+
+      const error = await useCase.execute(command()).catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(GenerationFailedError);
+      expect((error as GenerationFailedError).code).toBe('AI_PROVIDER_RATE_LIMITED');
+      expect((error as GenerationFailedError).quotaRefunded).toBe(true);
+      expect((error as GenerationFailedError).message).toContain('Limite do provedor.');
+      expect((error as GenerationFailedError).message).toContain('não contou');
+      expect(limiter.refunded).toEqual(['mentor-1']);
+    });
+
+    it('does not refund a failure that is not refundable (e.g. a configuration error) and says it counted', async () => {
+      const notRefundable = new QuestionDraftGeneratorError('AI_PROVIDER_ERROR', 'Erro HTTP 401.', false);
+      const { useCase, limiter } = build([], new FakeLimiter(), notRefundable);
+
+      const error = await useCase.execute(command()).catch((e: unknown) => e);
+
+      expect((error as GenerationFailedError).quotaRefunded).toBe(false);
+      expect((error as GenerationFailedError).message).toContain('Esta tentativa contou');
+      expect(limiter.refunded).toEqual([]);
+    });
+
+    it('does not refund when the failure comes after the provider already sent items', async () => {
+      const { useCase, limiter } = build([generated()], new FakeLimiter(), unavailable);
+
+      const error = await useCase.execute(command()).catch((e: unknown) => e);
+
+      expect((error as GenerationFailedError).quotaRefunded).toBe(false);
+      expect((error as GenerationFailedError).message).toContain('Esta tentativa contou');
+      expect(limiter.refunded).toEqual([]);
+    });
+
+    it('does not refund when a response arrived and every item was rejected', async () => {
+      const { useCase, limiter } = build([twoCorrect, badLetter]);
+
+      await useCase.execute(command({ quantity: 2 }));
+
+      expect(limiter.refunded).toEqual([]);
+    });
   });
 });
