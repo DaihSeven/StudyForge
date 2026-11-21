@@ -78,21 +78,29 @@ export class GenerateDraftQuestionsUseCase {
         break;
       }
 
-      const parsed = GeneratedDraftQuestionSchema.safeParse(item);
-      if (!parsed.success) {
-        rejected.push({ index, code: 'INVALID_GENERATED_FORMAT', message: parsed.error.message });
+      const outcome = await this.saveGenerated(command.organizationId, item);
+      if (outcome.isOk()) {
+        drafts.push(outcome.value);
       } else {
-        const created = await this.createDraftQuestion.execute({ organizationId: command.organizationId, ...parsed.data });
-        if (created.isOk()) {
-          drafts.push(created.value);
-        } else {
-          rejected.push({ index, code: created.error.code, message: created.error.message });
-        }
+        rejected.push({ index, ...outcome.error });
       }
       index += 1;
     }
 
     return ok({ drafts, rejected });
+  }
+
+  /** Valida o formato (schema) e a regra do domínio de um item gerado e, se válido, salva o rascunho. */
+  private async saveGenerated(
+    organizationId: string,
+    item: unknown,
+  ): Promise<Result<DraftQuestion, { readonly code: string; readonly message: string }>> {
+    const parsed = GeneratedDraftQuestionSchema.safeParse(item);
+    if (!parsed.success) {
+      return err({ code: 'INVALID_GENERATED_FORMAT', message: parsed.error.message });
+    }
+    const created = await this.createDraftQuestion.execute({ organizationId, ...parsed.data });
+    return created.mapErr((error) => ({ code: error.code, message: error.message }));
   }
 
   private checkRequest(command: GenerateDraftQuestionsCommand): InvalidGenerationRequestError | null {
