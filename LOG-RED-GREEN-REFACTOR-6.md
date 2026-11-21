@@ -348,3 +348,183 @@ found 0 vulnerabilities
 Cobertura (statements / branches): shared-contracts 100 / 100, import-domain 100 / 100, import-application 97,67 / 97,36, import-infra 98,19 / 91,17, api 100 / 94,44 (todos ≥ 80).
 
 Teste manual (`scripts/ai-smoke.mjs`, fora do CI): rodado uma vez com `GROQ_API_KEY` do ambiente; gerou 1 questão `SINGLE_CHOICE` em português com `openai/gpt-oss-120b`. A chave não foi impressa.
+
+---
+
+# Ajustes antes do merge (PR #20)
+
+Pedidos da autora após a revisão. Rodadas só com `npx nx test <projeto>`.
+
+## Ajuste 1 — título do teste "nunca publica" (`apps/api`)
+
+O teste só conferia que o objeto salvo não tinha a chave `published`, o que passaria mesmo com outro nome de campo. O título passou a dizer só o que o teste prova (cada item vira `DraftQuestion` da organização do pedido) e a asserção fraca foi trocada por `instanceof DraftQuestion`. Sem ciclo (nenhum comportamento mudou); `api`: 24 testes passam.
+
+## Ajustes 3 e 4 — teto global 40 e aviso de subida (`import-infra`)
+
+Padrão de `AI_DAILY_LIMIT_GLOBAL` passa de 100 para 40 (provisório) e a subida com provedor real loga que o endpoint não tem autenticação até o Marco 3.2.
+
+### RED
+
+```
+$ npx nx test import-infra
+FAIL import-infra src/lib/ai-config/ai-config.spec.ts
+  ● loadAiConfig › defaults to the mock provider with 8000 chars, 10 per mentor and no key needed
+    Expected: 40
+    Received: 100
+  ● buildAiStartupWarnings › has no warning for the mock provider
+    buildAiStartupWarnings ainda não implementado.
+    > 89 |   throw new Error('buildAiStartupWarnings ainda não implementado.');
+  ● buildAiStartupWarnings › warns that the endpoint has no authentication until Marco 3.2 when a real provider is on
+  ● buildAiStartupWarnings › never includes the key in a warning
+  [...]
+Test Suites: 1 failed, 9 passed, 10 total
+Tests:       4 failed, 90 passed, 94 total
+```
+
+### GREEN
+
+```
+$ npx nx test import-infra
+Test Suites: 10 passed, 10 total
+Tests:       94 passed, 94 total
+```
+
+## Ajuste 2 — devolução de cota
+
+Regra: o use case devolve a cota **somente** quando o provedor falha antes de qualquer resposta (429, 5xx, timeout, falha de rede) na primeira chamada. Resposta recebida, mesmo com todos os itens rejeitados, **não** devolve. A mensagem ao mentor diz se a tentativa contou ou não.
+
+### Ciclo A — `refund()` no `AiUsageLimiter` e no adapter em memória (`import-infra`)
+
+### RED
+
+```
+$ npx nx test import-infra
+FAIL import-infra src/lib/ai-usage-limiter/in-memory-ai-usage-limiter.adapter.spec.ts
+  ● InMemoryAiUsageLimiterAdapter › refund › gives back one unit to the mentor and to the global ceiling
+    InMemoryAiUsageLimiterAdapter.refund ainda não implementado.
+    > 60 |     throw new Error('InMemoryAiUsageLimiterAdapter.refund ainda não implementado.');
+  ● InMemoryAiUsageLimiterAdapter › refund › lets the mentor consume again after hitting the limit and being refunded
+  ● InMemoryAiUsageLimiterAdapter › refund › never goes below zero used (refund without a previous consumption changes nothing)
+  ● InMemoryAiUsageLimiterAdapter › refund › does not refund a consumption from a previous day (the counters were reset)
+  [...]
+Test Suites: 1 failed, 9 passed, 10 total
+Tests:       4 failed, 94 passed, 98 total
+```
+
+### GREEN
+
+```
+$ npx nx test import-infra
+Test Suites: 10 passed, 10 total
+Tests:       98 passed, 98 total
+```
+
+### Ciclo B — use case devolve a cota só quando o provedor falha antes de responder (`import-application`)
+
+`QuestionDraftGeneratorError` (com `refundable`) e `GenerationFailedError` (com `quotaRefunded` e a mensagem "contou"/"não contou") entram no contrato; o use case ainda não os usa.
+
+### RED
+
+```
+$ npx nx test import-application
+FAIL import-application src/lib/use-cases/generate-draft-questions.use-case.spec.ts
+  ● GenerateDraftQuestionsUseCase › when the generator fails › refunds the quota and says the attempt did not count when it fails before any response
+    Expected constructor: GenerationFailedError
+    Received constructor: QuestionDraftGeneratorError
+  ● GenerateDraftQuestionsUseCase › when the generator fails › does not refund a failure that is not refundable (e.g. a configuration error) and says it counted
+    Expected: false
+    Received: undefined
+  ● GenerateDraftQuestionsUseCase › when the generator fails › does not refund when the failure comes after the provider already sent items
+  [...]
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       3 failed, 31 passed, 34 total
+```
+
+### GREEN
+
+```
+$ npx nx test import-application
+Test Suites: 2 passed, 2 total
+Tests:       34 passed, 34 total
+```
+
+### Ciclo C — adapter Groq marca as falhas devolvíveis (`import-infra`)
+
+`AiProviderError` passa a estender `QuestionDraftGeneratorError`. Devolvível = falha na **primeira** requisição: 429, 5xx, timeout, falha de rede. Não devolvível: 4xx que não seja 429 (erro de configuração, ex.: chave inválida), resposta sem mensagem utilizável e qualquer falha depois de o provedor já ter respondido (rodadas de tool calling). No stub, `refundable` fica fixo em `false` (o RED falha por asserção, não por exceção).
+
+### RED
+
+```
+$ npx nx test import-infra
+FAIL import-infra src/lib/groq/groq-question-draft-generator.adapter.spec.ts
+  ● GroqQuestionDraftGeneratorAdapter › refundable failures (before any provider response) › on the first request, HTTP 429 is refundable=true
+    Expected: true
+    Received: false
+  ● GroqQuestionDraftGeneratorAdapter › refundable failures (before any provider response) › on the first request, HTTP 500 is refundable=true
+  ● GroqQuestionDraftGeneratorAdapter › refundable failures (before any provider response) › on the first request, HTTP 503 is refundable=true
+  ● GroqQuestionDraftGeneratorAdapter › refundable failures (before any provider response) › on the first request, network failure is refundable=true
+  ● GroqQuestionDraftGeneratorAdapter › refundable failures (before any provider response) › on the first request, timeout is refundable=true
+  [...]
+Test Suites: 1 failed, 9 passed, 10 total
+Tests:       5 failed, 105 passed, 110 total
+```
+
+### GREEN
+
+```
+$ npx nx test import-infra
+Test Suites: 10 passed, 10 total
+Tests:       110 passed, 110 total
+```
+
+### Ciclo D — o endpoint diz ao mentor se a tentativa contou (`apps/api`)
+
+O adapter já lança `AiProviderError` (um `QuestionDraftGeneratorError`) e o use case o converte em `GenerationFailedError`; o controller ainda trata só `AiProviderError`. No teste do erro no meio do stream, o gerador falha depois de um rascunho com `refundable=true`: a cota **não** volta (a resposta já tinha chegado) e a mensagem diz que contou.
+
+### RED
+
+```
+$ npx nx test api
+FAIL api src/modules/draft-question/generate-draft-questions.controller.spec.ts (7.149 s)
+  ● POST /api/draft-questions/generate › streams text/event-stream with one draft event per question and a final done event (mock provider)
+    - Expected  - 1
+    + Received  + 1
+  ● POST /api/draft-questions/generate › answers 429 when the provider is rate limited before any event, saying the attempt did not count
+    Expected: 429
+    Received: 502
+  ● POST /api/draft-questions/generate › answers 502 and says the attempt counted when the failure is not refundable, without leaking details
+    Expected substring: "Esta tentativa contou"
+    Received string:    "{\"code\":\"GENERATION_FAILED\",\"message\":\"Não foi possível gerar as questões agora. Use a importação manual (JSON ou Markdown).\"}"
+  ● POST /api/draft-questions/generate › sends an error event and ends the stream when the generator fails after some drafts
+    Expected: "AI_PROVIDER_TIMEOUT"
+  [...]
+Test Suites: 1 failed, 4 passed, 5 total
+Tests:       4 failed, 22 passed, 26 total
+```
+
+### GREEN
+
+(A primeira rodada também acusou uma falha do ajuste 3: o teste de streaming ainda esperava o teto global 99 e, com o padrão 40, o valor é 39; expectativa corrigida.)
+
+```
+$ npx nx test api
+Test Suites: 5 passed, 5 total
+Tests:       26 passed, 26 total
+```
+
+## Ajuste 5 — smoke com uso de tokens
+
+`scripts/ai-smoke.mjs` imprime também o `usage` da resposta da Groq. Rodado uma vez (modelo `openai/gpt-oss-120b`, 1 questão `SINGLE_CHOICE`, **sem** tool calling): `Tokens: entrada=235 saída=430 total=665`. A chave não foi impressa.
+
+## Ajuste 6 — ADR-010
+
+Decisões aprovadas movidas para resolvidas (contador em memória, fuso, 8.000 caracteres, cota, quantity ≤ 10, teto global 40 provisório); registrados o endpoint sem autenticação como risco aceito até o Marco 3.2, o Google fora do curso (backlog) e o streaming real do provedor adiado.
+
+## Fechamento dos ajustes
+
+```
+$ npx nx affected -t lint typecheck test --base=origin/main
+ NX   13 tasks: 13 succeeded, 3 cached
+```
+
+(Conforme o pedido, sem `build` e sem a suíte completa com cobertura: o CI faz.)
