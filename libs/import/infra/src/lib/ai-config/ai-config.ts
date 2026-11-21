@@ -82,3 +82,9 @@ export function describeAiConfig(config: AiConfig): string {
     `apiKey=${config.apiKey ? '[set]' : '[none]'}`,
   ].join(' ');
 }
+
+/** Avisos a logar na subida (nunca contêm a chave). */
+export function buildAiStartupWarnings(config: AiConfig): string[] {
+  void config;
+  throw new Error('buildAiStartupWarnings ainda não implementado.');
+}
