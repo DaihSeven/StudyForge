@@ -1,6 +1,6 @@
 # Resumo do repositório
 
-Fotografia do estado do StudyForge em **2026-11-17**, na `main` (commit `aa1d5f1`, merge do PR #11). Documento de apoio: a fonte de verdade sobre produto é o `README.md` e sobre como trabalhar no código é o `CLAUDE.md`. Não contém segredos, connection strings nem valores do `.env`.
+Fotografia do estado do StudyForge em **2026-11-21**, na `main` (commit `3937790`, merge do PR #16). Cobre os PRs #11 a #17. Documento de apoio: a fonte de verdade sobre produto é o `README.md` e sobre como trabalhar no código é o `CLAUDE.md`. Não contém segredos, connection strings nem valores do `.env`.
 
 ## 1. Projeto
 
@@ -35,11 +35,11 @@ libs/
 prisma/                   schema.prisma (User, DraftQuestion, Alternative) e migrations
 prisma.config.ts          na raiz do repositório
 docs/
-  adrs/                   ADR-003 a ADR-008
+  adrs/                   ADR-003 a ADR-010
   specs/                  S5 e Marco 3.1
   tasks/, rpi/, evidencias/
 .github/workflows/ci.yml
-README.md  CLAUDE.md  AGENT.md  DELIVERABLES.md  LOG-RED-GREEN-REFACTOR-{1,2,3}.md
+README.md  CLAUDE.md  AGENT.md  DELIVERABLES.md  LOG-RED-GREEN-REFACTOR-{1,2,3,4}.md
 ```
 
 Projetos Nx (11): `api`, `web`, `shared-domain`, `shared-contracts`, `shared-prisma`, `import-domain`, `import-application`, `import-infra`, `identity-domain`, `identity-application`, `identity-infra`.
@@ -82,7 +82,7 @@ npx nx run-many -t test --coverage --coverageReporters=text-summary --skip-nx-ca
 
 ## 6. Cobertura atual por projeto
 
-Saída real de `npx nx run-many -t test --coverage --coverageReporters=text-summary --skip-nx-cache` na `main` (12 tarefas, todas com sucesso; 122 testes no total). Os projetos têm limite mínimo de 80% no `jest.config` (`coverageThreshold`).
+Saída real de `npx nx run-many -t test --coverage --coverageReporters=text-summary --skip-nx-cache` na `main` (12 tarefas, todas com sucesso; 124 testes no total). O bloco abaixo é da fotografia de 2026-11-17 (122 testes); só `identity-infra` mudou desde então (PR #15), e dele estão atualizados apenas os dois percentuais abaixo, os únicos recontados. Os projetos têm limite mínimo de 80% no `jest.config` (`coverageThreshold`).
 
 ```
 == shared-contracts
@@ -145,18 +145,15 @@ Branches     : 100% ( 4/4 )
 Functions    : 100% ( 9/9 )
 Lines        : 100% ( 30/30 )
 Tests:       9 passed, 9 total
-== identity-infra
-Statements   : 89.47% ( 17/19 )
-Branches     : 83.33% ( 5/6 )
-Functions    : 100% ( 5/5 )
-Lines        : 88.23% ( 15/17 )
-Tests:       4 passed, 4 total
+== identity-infra   (atualizado após o PR #15; só os percentuais foram recontados)
+Statements   : 90.47%
+Branches     : 83.33%
 ```
 
 Observações:
 
 - `identity-application` não tem testes (só um port e um erro), por isso a cobertura aparece como `Unknown%`.
-- `identity-infra` (89,47% de statements) e `shared-domain` (93,22%) são os únicos abaixo de 100% em statements, e ambos acima do limite de 80%.
+- `identity-infra` (90,47% de statements e 83,33% de branches) e `shared-domain` (93,22%) são os únicos abaixo de 100% em statements, e ambos acima do limite de 80%.
 - A garantia "nada é gravado" do cenário 3 da S5 (email duplicado) depende do PostgreSQL e não é provada por teste sem banco (ver `LOG-RED-GREEN-REFACTOR-3.md`).
 
 ## 7. CI e proteção da `main`
@@ -192,15 +189,17 @@ Estado: o run do PR #11 terminou com os 7 checks em sucesso. O `npm audit` de pr
 |---|---|
 | Etapa 1 — Fundação documental | concluída |
 | Etapa 2 — Marcos 2.1 a 2.6 (monorepo, domínio, application, infra, API REST, contexto `identity` scaffoldado) | concluída |
-| Etapa 3 — Marco 3.1 (fechar `identity`) | **parcial**: `UserRepository` com `findByEmail` e `save`, `PrismaUserRepository` (ainda não registrado no `IdentityInfraModule`), model e migration de `User`. Spec pronta, falta implementar. O CI já tem PostgreSQL para os cenários que precisam de banco (C09, C11, C12, C17). |
+| Etapa 3 — Marco 3.1 (fechar `identity`) | **parcial**: `UserRepository` com `findById` (T1, PR #15), `findByEmail` e `save`, `PrismaUserRepository` (ainda não registrado no `IdentityInfraModule`), model e migration de `User`. Spec pronta; faltam T2 a T17. O CI já tem PostgreSQL para os cenários que precisam de banco (C09, C11, C12, C17). |
 | Marco 3.2 | autenticação (Google OAuth) e fluxo de convite por link: planejado |
 | Marco 3.3 | importação por modelo estruturado (JSON e Markdown): planejado |
 | Marco 3.4 | contexto `quiz` (scaffold e domain): planejado |
 | Marco 3.5 | publicação (`DraftQuestion` aprovado vira `Question`): planejado |
 | Marco 3.6 | execução pelo aluno: planejado |
-| Etapa 4 | `course`, importers PDF/DOCX, banco por certificação (ADR-008), organização pessoal e moderação (ADR-007): planejada |
+| Etapa 4 | `course`, importers PDF/DOCX, banco por certificação (ADR-008), organização pessoal e moderação (ADR-007): **backlog pós-curso** (ver abaixo) |
 
-**Próximo passo:** responder as decisões em aberto do ADR-009 e da lista de tarefas (as que bloqueiam cada tarefa estão mapeadas no fim de `docs/tasks/marco-3-1-tarefas.md`) e implementar o Marco 3.1 na ordem T1 a T17 desse arquivo, começando por `UserRepository.findById` (T1: C01, C02). O comentário de `organization.ts` e as contagens (T0) já foram feitos no PR #12.
+**Plano do curso (Semanas 11 a 14):** o plano acrescentou a camada de IA (ADR-010, aceito) ao escopo, e a Etapa 4 virou backlog pós-curso. Escopo, regras de corte e cronograma em `docs/escopo-projeto-final.md`.
+
+**Próximo passo:** responder as decisões em aberto do ADR-009 e da lista de tarefas (as que bloqueiam cada tarefa estão mapeadas no fim de `docs/tasks/marco-3-1-tarefas.md`) e implementar o Marco 3.1 na ordem T1 a T17 desse arquivo, a partir da T2 (a T1, `UserRepository.findById`, entrou no PR #15). O comentário de `organization.ts` e as contagens (T0) já foram feitos no PR #12.
 
 ## 9. Specs e ADRs
 
@@ -218,13 +217,13 @@ Estado: o run do PR #11 terminou com os 7 checks em sucesso. O `npm audit` de pr
 - ADR-007: organização pessoal automática, visibilidade `PRIVATE`/`UNLISTED`/`PUBLIC` e moderação por admin da plataforma.
 - ADR-008: banco de questões por certificação e simulados de 25 ou 65 questões por sorteio estratificado.
 - ADR-009 (`adr-009-persistencia-identity-marco-3-1.md`, **Proposed**): persistência do `identity` no Marco 3.1. Models `Organization`, `Membership` e `Invitation`, índices únicos (`Membership` por User e Organization, `Invitation.tokenHash`), `onDelete: Restrict` em todas as FKs, só o SHA-256 do token no banco, `EXPIRED` calculado, migration única do grupo e integração de C09, C11, C12 e C17 em `identity-infra` com `--parallel=1`. Traz 10 decisões em aberto.
-- ADR-010 (`adr-010-ia-opcional-na-geracao-de-rascunhos.md`, **Proposed**): IA gratuita e opcional na geração de rascunhos, ajustando parcialmente o ADR-004. Port `QuestionDraftGenerator` com adaptadores `mock` (padrão), `groq` e `google`, chave só no servidor, ação só para `MENTOR` com provedor configurado e limite diário por mentor e global. O fluxo manual continua sendo o caminho principal. Traz 6 decisões em aberto.
+- ADR-010 (`adr-010-ia-opcional-na-geracao-de-rascunhos.md`, **Accepted** em 2026-11-21, PR #16): IA gratuita e opcional na geração de rascunhos, ajustando parcialmente o ADR-004. Port `QuestionDraftGenerator` com adaptadores `mock` (padrão), `groq` e `google`, chave só no servidor, ação só para `MENTOR` com provedor configurado e limite diário por mentor e global. O fluxo manual continua sendo o caminho principal. Traz 6 decisões em aberto. A implementação só começa em PR próprio.
 
 **Tarefas** (`docs/tasks/`)
 
-- `marco-3-1-tarefas.md`: 18 tarefas ordenadas (T0 a T17), cada uma com objetivo, cenários C01–C29, arquivos esperados e critério de pronto. Marca as que precisam de banco (T16 e T17, só no CI). Substitui o checklist antigo `s6-identity-implementation-tasks.md`.
+- `marco-3-1-tarefas.md`: 18 tarefas ordenadas (T0 a T17), cada uma com objetivo, cenários C01–C29, arquivos esperados e critério de pronto. Marca as que precisam de banco (T16 e T17, só no CI). Substitui o checklist antigo `s6-identity-implementation-tasks.md`, que agora traz a marca "Substituído" no topo.
 
-Outros documentos: `DELIVERABLES.md` (histórico por semana), `LOG-RED-GREEN-REFACTOR-1/2/3.md`, `docs/rpi/`, `docs/evidencias/`.
+Outros documentos: `DELIVERABLES.md` (histórico por semana), `LOG-RED-GREEN-REFACTOR-1/2/3/4.md`, `TESTE-QUE-NAO-PROVA-NADA.md`, `docs/escopo-projeto-final.md`, `docs/rpi/`, `docs/evidencias/`.
 
 ## 10. Decisões em aberto mais relevantes
 
@@ -254,6 +253,7 @@ A lista completa está no fim de cada ADR.
 
 ## 11. Armadilhas conhecidas
 
+- **Override do `effect` no `package.json`** (`"effect": "^3.22.1"`, PR #17): corrige uma vulnerabilidade na dependência transitiva trazida pelo Prisma 7.10. Remover o override quando o Prisma 7.x trouxer o `effect` corrigido.
 - **`apps/web/next-env.d.ts` é reescrito pelo Next.** O arquivo é versionado, mas `next dev`/`next build` o regravam, deixando o working tree sujo sem mudança real. Não commitar: descartar com `git restore apps/web/next-env.d.ts`.
 - **`claude` fora do PATH depois de reconstruir o Codespace.** Se o comando não for encontrado, o binário fica em `/usr/local/share/npm-global/bin`; adicione ao PATH com `export PATH="$PATH:/usr/local/share/npm-global/bin"` (e ao `~/.bashrc` para persistir).
 - **`npx jest` na raiz quebra por causa do `apps/web`.** O `jest.config.ts` da raiz reúne os projetos, e o `jest.config.cts` do `web` chama o `next/jest`, que procura `app/` ou `pages/` a partir do diretório atual e falha com "Couldn't find any `pages` or `app` directory". Rode sempre pelo Nx: `npx nx test <projeto>` ou `npm run test`.

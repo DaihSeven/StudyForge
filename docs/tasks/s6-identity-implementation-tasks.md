@@ -1,3 +1,5 @@
+Status: Substituído por docs/tasks/marco-3-1-tarefas.md
+
 # S6: Tasks — Identity Repositories Implementation (Marco 3.1)
 
 **Baseado em:** ADR-003 + S5 Spec  
