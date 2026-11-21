@@ -20,6 +20,20 @@
         "parallel": false,
         "cwd": "{workspaceRoot}"
       }
+    },
+    "build": {
+      "options": {
+        "args": [
+          "--webpack"
+        ]
+      }
+    },
+    "dev": {
+      "options": {
+        "args": [
+          "--webpack"
+        ]
+      }
     }
   }
 }

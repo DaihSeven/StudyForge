@@ -110,10 +110,10 @@ export default [
                             sourceTag: "scope:api",
                             onlyDependOnLibsWithTags: ["scope:shared", "scope:import", "scope:identity"]
                         },
-                        // web: sem acesso direto a libs neste estágio
+                        // web: só consome shared/contracts (CLAUDE.md, seção 2, regra 8); nunca domain, application ou infra
                         {
                             sourceTag: "scope:web",
-                            onlyDependOnLibsWithTags: []
+                            onlyDependOnLibsWithTags: ["type:contracts"]
                         }
                     ]
                 }
