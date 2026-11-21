@@ -241,7 +241,7 @@ describe('GenerateDraftQuestionsUseCase', () => {
 
     await useCase.execute(command(), listener);
 
-    expect(events).toEqual(['draft:0:fake-uuid-1', 'rejected:1:INVALID_CORRECT_COUNT', 'draft:2:fake-uuid-2']);
+    expect(events).toEqual(['draft:0:fake-uuid-1', 'rejected:1:INVALID_CORRECT_COUNT', 'draft:2:fake-uuid-3']);
   });
 
   it('adds a notice that the attempt counted when every item was rejected, and does not refund the quota', async () => {
