@@ -15,6 +15,26 @@ export interface SseParseResult {
  * Parser SSE puro: recebe o texto acumulado e devolve os blocos completos (terminados por linha
  * em branco) e o que sobrou. Sem I/O e sem estado: quem lê o stream guarda o `remainder`.
  */
-export function parseSseBuffer(_buffer: string): SseParseResult {
-  throw new Error('parseSseBuffer ainda não implementado.');
+export function parseSseBuffer(buffer: string): SseParseResult {
+  const normalized = buffer.replace(/\r\n/g, '\n');
+  const blocks = normalized.split('\n\n');
+  const remainder = blocks.pop() ?? '';
+
+  const messages: SseMessage[] = [];
+  for (const block of blocks) {
+    let event = 'message';
+    const data: string[] = [];
+    for (const line of block.split('\n')) {
+      if (line.startsWith('event:')) {
+        event = line.slice('event:'.length).trimStart();
+      } else if (line.startsWith('data:')) {
+        data.push(line.slice('data:'.length).replace(/^ /, ''));
+      }
+    }
+    if (data.length > 0) {
+      messages.push({ event, data: data.join('\n') });
+    }
+  }
+
+  return { messages, remainder };
 }
