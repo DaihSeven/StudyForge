@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DraftQuestion, InvalidGenerationRequestError } from '@studyforge/import/domain';
 import { GeneratedDraftQuestionSchema, MAX_GENERATION_QUANTITY } from '@studyforge/shared/contracts';
 import { DomainError, EntityId, err, ok, OrganizationId, QUESTION_TYPE_RULES, Result } from '@studyforge/shared/domain';
+import { GenerationFailedError, QuestionDraftGeneratorError } from '../errors/generation.errors';
 import { AI_USAGE_LIMITER_TOKEN, AiUsageLimiter, AiUsageRemaining } from '../ports/ai-usage-limiter.port';
 import { QUESTION_DRAFT_GENERATOR_TOKEN, QuestionDraftGenerator } from '../ports/question-draft-generator.port';
 import { CreateDraftQuestionUseCase } from './create-draft-question.use-case';
@@ -89,25 +90,42 @@ export class GenerateDraftQuestionsUseCase {
       options: { quantity: command.quantity, alternativesPerQuestion: command.alternativesPerQuestion },
     });
 
-    for await (const item of stream) {
-      if (index >= command.quantity) {
-        break;
-      }
+    try {
+      for await (const item of stream) {
+        if (index >= command.quantity) {
+          break;
+        }
 
-      const outcome = await this.saveGenerated(command.organizationId, item);
-      if (outcome.isOk()) {
-        drafts.push(outcome.value);
-        await listener.onDraft?.(outcome.value, index);
-      } else {
-        const rejection = { index, ...outcome.error };
-        rejected.push(rejection);
-        await listener.onRejected?.(rejection);
+        const outcome = await this.saveGenerated(command.organizationId, item);
+        if (outcome.isOk()) {
+          drafts.push(outcome.value);
+          await listener.onDraft?.(outcome.value, index);
+        } else {
+          const rejection = { index, ...outcome.error };
+          rejected.push(rejection);
+          await listener.onRejected?.(rejection);
+        }
+        index += 1;
       }
-      index += 1;
+    } catch (error) {
+      if (!(error instanceof QuestionDraftGeneratorError)) {
+        throw error;
+      }
+      // Só devolve a cota se o provedor falhou antes de qualquer resposta; com resposta recebida, a tentativa contou.
+      const refund = error.refundable && index === 0;
+      if (refund) {
+        await this.limiter.refund(mentorId);
+      }
+      throw new GenerationFailedError(error, refund);
     }
 
     const usageLeft = await this.limiter.remaining(mentorId);
-    return ok({ drafts, rejected, usage: usageLeft, ...(drafts.length === 0 && rejected.length > 0 ? { notice: ALL_REJECTED_NOTICE } : {}) });
+    return ok({
+      drafts,
+      rejected,
+      usage: usageLeft,
+      ...(drafts.length === 0 && rejected.length > 0 ? { notice: ALL_REJECTED_NOTICE } : {}),
+    });
   }
 
   /** Valida o formato (schema) e a regra do domínio de um item gerado e, se válido, salva o rascunho. */
