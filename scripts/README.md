@@ -2,7 +2,7 @@
 
 ## `ai-smoke.mjs` — teste manual da Groq (fora do CI e do jest)
 
-Gera **1 questão** a partir de um parágrafo fixo e imprime **só a questão** (modelo, enunciado, alternativas; `*` marca a correta). Serve para conferir, à mão, que a chave, o endpoint e o modelo funcionam. **Não** exercita o adaptador do repositório (tool calling, validação): isso é coberto pelos testes com `fetch` falso.
+Gera **1 questão** a partir de um parágrafo fixo e imprime a questão (modelo, enunciado, alternativas; `*` marca a correta) e o **uso de tokens** informado pela Groq (`usage`: entrada, saída e total). Serve para estimar tokens por geração e conferir a cota diária. Serve para conferir, à mão, que a chave, o endpoint e o modelo funcionam. **Não** exercita o adaptador do repositório (tool calling, validação): isso é coberto pelos testes com `fetch` falso.
 
 ```bash
 export GROQ_API_KEY=...        # nunca commitar; em Codespaces, use Codespaces Secrets

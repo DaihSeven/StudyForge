@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Teste manual (fora do CI e do jest): gera 1 questão na Groq e imprime SÓ a questão.
+// Teste manual (fora do CI e do jest): gera 1 questão na Groq e imprime a questão e o uso de tokens.
 // Lê GROQ_API_KEY (e, opcional, AI_MODEL) do ambiente. Nunca imprime a chave.
 // Uso: GROQ_API_KEY=... node scripts/ai-smoke.mjs   (ver scripts/README.md)
 
@@ -62,4 +62,13 @@ console.log(`Modelo: ${model}`);
 console.log(`\n${question.statement}`);
 for (const alternative of question.alternatives ?? []) {
   console.log(`${alternative.isCorrect ? '*' : ' '} ${alternative.letter}) ${alternative.text}`);
+}
+
+const usage = data?.usage;
+if (usage) {
+  console.log(
+    `\nTokens: entrada=${usage.prompt_tokens} saída=${usage.completion_tokens} total=${usage.total_tokens}`,
+  );
+} else {
+  console.log('\nTokens: a resposta não trouxe o campo usage.');
 }
