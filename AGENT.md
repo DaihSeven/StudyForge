@@ -12,7 +12,7 @@ específicas registradas no `CLAUDE.md` e no `README.md` prevalecem.
 
 O projeto está na **Etapa 2 — Primeiro artefato**, com os **Marcos 2.1–2.5**
 concluídos e o contexto `identity` scaffoldado (domínio completo com 21 testes;
-application e infra com o `UserRepository`, o `PrismaUserRepository` e o model `User`;
+application e infra com o `UserRepository` (`findById`, `findByEmail`, `save`), o `PrismaUserRepository` e o model `User`;
 restante de application/infra do `identity` ainda por fazer). Existe hoje:
 
 - monorepo Nx 23 com 11 projetos
@@ -33,7 +33,7 @@ restante de application/infra do `identity` ainda por fazer). Existe hoje:
 - Prisma 7.10 com schema: models User, DraftQuestion (com alternativas compostas) e Alternative
 - Migrações criadas: 20261001231755_init, 20261109190000_create_users
 - ESLint: regras scope (shared, import, identity, api, web) e type (domain, application, infra, contracts)
-- 122 testes unitários (shared-domain 26, import-domain 31, identity-domain 23, mais 42 de contracts/prisma/application/infra/api/web), todos sem banco
+- 124 testes unitários, todos sem banco (shared-domain 26, import-domain 31, identity-domain 23; `identity-infra` com 90,47% de statements e 83,33% de branches)
 - CI (GitHub Actions) com o job **Integration (Postgres)**: service container `postgres:16` com credenciais descartáveis, `prisma migrate deploy` e `nx run-many -t test-integration`. O job não é obrigatório no ruleset `proteger-main`. O alvo `test-integration` tem padrões em `targetDefaults` do `nx.json` e hoje existe em `shared-prisma` (fumaça `SELECT 1`) e `import-infra`
 - lint, test, build funcionando para todos os projetos
 - skill `bounded-context-scaffolder` criada (gera novo bounded context com estrutura + proteções)
@@ -50,6 +50,8 @@ Não existe ainda:
 - Importação por modelo estruturado JSON/Markdown via port QuestionImporter (ver ADR-004), ainda não implementada
 - Quiz: criação, publicação, execução, resultado do estudante (Etapa 3)
 - Banco de dados real no ambiente de desenvolvimento (`DATABASE_URL` em `.env.local` com Neon ou PostgreSQL local). No CI, o PostgreSQL existe só dentro do job Integration (Postgres)
+
+Fotografia de 2026-11-21, `main` no commit `3937790`, depois dos PRs #11 a #17. ADR-010 (IA gratuita e opcional na geração de rascunhos) está **aceito**; a implementação só começa em PR próprio. O `package.json` tem um override de `effect` (`^3.22.1`, PR #17) por vulnerabilidade na dependência transitiva do Prisma; remover quando o Prisma 7.x trouxer o `effect` corrigido. Plano do curso e escopo do projeto final: `docs/escopo-projeto-final.md`.
 
 ## 2. Como este repositório evolui
 
