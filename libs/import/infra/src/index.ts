@@ -6,3 +6,4 @@ export * from './lib/draft-question/draft-question.module';
 export * from './lib/ai-usage-limiter/in-memory-ai-usage-limiter.adapter';
 export * from './lib/question-draft-generator/mock-question-draft-generator.adapter';
 export * from './lib/clock/sao-paulo-clock.adapter';
+export * from './lib/ai-config/ai-config';
