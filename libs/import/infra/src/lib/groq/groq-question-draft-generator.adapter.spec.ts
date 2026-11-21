@@ -1,3 +1,4 @@
+import { QuestionDraftGeneratorError } from '@studyforge/import/application';
 import { GeneratedDraftQuestionSchema } from '@studyforge/shared/contracts';
 import { AiProviderError } from './ai-provider.error';
 import {
@@ -334,6 +335,41 @@ describe('GroqQuestionDraftGeneratorAdapter', () => {
         expect((error as AiProviderError).code).toBe('AI_PROVIDER_BAD_RESPONSE');
       },
     );
+  });
+
+  describe('refundable failures (before any provider response)', () => {
+    const failure = async (responses: (Response | Error)[]) => {
+      const { adapter } = build(responses);
+      return (await collect(adapter.generate(input())).catch((e: unknown) => e)) as AiProviderError;
+    };
+
+    it('is a QuestionDraftGeneratorError, so the use case can tell it apart', async () => {
+      expect(await failure([json({}, 429)])).toBeInstanceOf(QuestionDraftGeneratorError);
+    });
+
+    it.each([
+      ['HTTP 429', true, () => json({}, 429)],
+      ['HTTP 500', true, () => json({}, 500)],
+      ['HTTP 503', true, () => json({}, 503)],
+      ['HTTP 401 (configuration, not transient)', false, () => json({}, 401)],
+      ['HTTP 400', false, () => json({}, 400)],
+      ['network failure', true, () => new Error('ECONNRESET')],
+      ['timeout', true, () => Object.assign(new Error('t'), { name: 'TimeoutError' })],
+      ['response without a usable message', false, () => json({ choices: [] })],
+    ])('on the first request, %s is refundable=%s', async (_name, refundable, response) => {
+      expect((await failure([response()])).refundable).toBe(refundable);
+    });
+
+    it.each([
+      ['HTTP 429', () => json({}, 429)],
+      ['HTTP 500', () => json({}, 500)],
+      ['network failure', () => new Error('ECONNRESET')],
+    ])('is not refundable when %s happens after the provider already responded', async (_name, response) => {
+      const error = await failure([callTools(validate('call_1', single())), response()]);
+
+      expect(error).toBeInstanceOf(AiProviderError);
+      expect(error.refundable).toBe(false);
+    });
   });
 
   it('refuses to be built without an API key', () => {
