@@ -1,7 +1,7 @@
 # ADR-010: IA gratuita e opcional na geração de rascunhos
 
 **Date:** 2026-11-21  
-**Status:** Proposed  
+**Status:** Accepted  
 **Decision Maker:** Responsável do projeto (aprovação pelo merge deste ADR)  
 **Affected By:** ADR-004, `import-application`, `import-infra`, `shared/contracts`, variáveis de ambiente da API, CLAUDE.md seções 2 (regra 7) e 4  
 
@@ -15,7 +15,17 @@ Geração opcional de `DraftQuestion[]` por IA gratuita, atrás do port `Questio
 
 ## Status
 
-**Proposed**: ajusta parcialmente o [ADR-004](adr-004-importacao-por-modelo-estruturado.md), trocando "sem IA paga" por "IA gratuita e opcional". Este ADR é só documentação: nenhum código, dependência, variável de ambiente ou migration é criado por ele. O que não foi decidido está em "Decisões em aberto", sem resposta.
+**Accepted**: ajusta parcialmente o [ADR-004](adr-004-importacao-por-modelo-estruturado.md), trocando "sem IA paga" por "IA gratuita e opcional". Este ADR é só documentação: nenhum código, dependência, variável de ambiente ou migration é criado por ele. O que não foi decidido está em "Decisões em aberto", sem resposta.
+
+---
+
+## Aprovação
+
+A autora do projeto aprovou, junto com a aceitação deste ADR:
+
+1. CLAUDE.md, seção 4: IA permitida somente como adaptador opcional e gratuito atrás do port `QuestionDraftGenerator`, com `mock` como padrão, CI sem chamada real e sem publicar (regra 7 mantida).
+2. CLAUDE.md, seção 5, regra 2: a camada de IA (Semanas 11 a 13 do curso) entra no escopo; a implementação só começa em PR próprio, depois da aceitação deste ADR.
+3. README.md: "sem IA paga" trocado por "IA gratuita e opcional (ADR-010)".
 
 ---
 
@@ -68,7 +78,7 @@ O botão ou ação de gerar aparece **só para o papel `MENTOR`** e **só quando
 
 ### 5. Limite de uso
 
-- Limite diário **por mentor**: padrão **10 gerações por dia**, configurável em `AI_DAILY_LIMIT_PER_MENTOR`.
+- Limite diário **por mentor**: padrão **10 gerações por dia**, configurável em `AI_DAILY_LIMIT_PER_MENTOR`. Com a organização pessoal do [ADR-007](adr-007-organizacao-pessoal-visibilidade-e-moderacao.md), todo usuário é `MENTOR` da própria organização, então este limite por usuário é **obrigatório, não opcional**.
 - **Teto global diário** configurável em `AI_DAILY_LIMIT_GLOBAL`.
 - Port `AiUsageLimiter`. No curso, o adaptador é **em memória** (sem migration).
 - Ao atingir qualquer um dos limites, a mensagem aponta para a importação manual.
