@@ -15,6 +15,12 @@ export interface SseParseResult {
  * Parser SSE puro: recebe o texto acumulado e devolve os blocos completos (terminados por linha
  * em branco) e o que sobrou. Sem I/O e sem estado: quem lê o stream guarda o `remainder`.
  */
+/** Valor de uma linha `campo: valor`; o campo precisa casar exato e um único espaço após ":" é descartado. */
+function fieldValue(line: string, field: string): string | null {
+  const prefix = `${field}:`;
+  return line.startsWith(prefix) ? line.slice(prefix.length).replace(/^ /, '') : null;
+}
+
 export function parseSseBuffer(buffer: string): SseParseResult {
   const normalized = buffer.replace(/\r\n/g, '\n');
   const blocks = normalized.split('\n\n');
@@ -25,10 +31,12 @@ export function parseSseBuffer(buffer: string): SseParseResult {
     let event = 'message';
     const data: string[] = [];
     for (const line of block.split('\n')) {
-      if (line.startsWith('event:')) {
-        event = line.slice('event:'.length).trimStart();
-      } else if (line.startsWith('data:')) {
-        data.push(line.slice('data:'.length).replace(/^ /, ''));
+      const eventName = fieldValue(line, 'event');
+      const dataLine = fieldValue(line, 'data');
+      if (eventName !== null) {
+        event = eventName;
+      } else if (dataLine !== null) {
+        data.push(dataLine);
       }
     }
     if (data.length > 0) {
