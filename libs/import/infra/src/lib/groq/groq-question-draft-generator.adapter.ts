@@ -1,23 +1,11 @@
-import {
-  QuestionDraftGenerationInput,
-  QuestionDraftGenerator,
-} from "@studyforge/import/application";
-import { GeneratedDraftQuestion } from "@studyforge/shared/contracts";
-import { AiProviderError, MANUAL_IMPORT_HINT } from "./ai-provider.error";
-import {
-  buildSystemPrompt,
-  buildUserMessage,
-  VALIDATE_TOOL_NAME,
-} from "./system-prompt";
-import {
-  MAX_CORRECTION_ROUNDS,
-  VALIDAR_QUESTAO_TOOL,
-  ValidarQuestaoTool,
-} from "./validar-questao.tool";
+import { QuestionDraftGenerationInput, QuestionDraftGenerator } from '@studyforge/import/application';
+import { GeneratedDraftQuestion } from '@studyforge/shared/contracts';
+import { AiProviderError, MANUAL_IMPORT_HINT } from './ai-provider.error';
+import { buildSystemPrompt, buildUserMessage, VALIDATE_TOOL_NAME } from './system-prompt';
+import { MAX_CORRECTION_ROUNDS, VALIDAR_QUESTAO_TOOL, ValidarQuestaoTool } from './validar-questao.tool';
 
-export const GROQ_DEFAULT_MODEL = "openai/gpt-oss-120b";
-export const GROQ_CHAT_COMPLETIONS_URL =
-  "https://api.groq.com/openai/v1/chat/completions";
+export const GROQ_DEFAULT_MODEL = 'openai/gpt-oss-120b';
+export const GROQ_CHAT_COMPLETIONS_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const DEFAULT_TIMEOUT_MS = 60_000;
 
 export type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
@@ -36,7 +24,7 @@ interface ToolCall {
 }
 
 interface ChatMessage {
-  role: "system" | "user" | "assistant" | "tool";
+  role: 'system' | 'user' | 'assistant' | 'tool';
   content?: string | null;
   tool_calls?: ToolCall[];
   tool_call_id?: string;
@@ -56,7 +44,7 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
 
   constructor(options: GroqQuestionDraftGeneratorOptions) {
     if (!options.apiKey) {
-      throw new Error("GroqQuestionDraftGeneratorAdapter requires an apiKey.");
+      throw new Error('GroqQuestionDraftGeneratorAdapter requires an apiKey.');
     }
     this.apiKey = options.apiKey;
     this.model = options.model ?? GROQ_DEFAULT_MODEL;
@@ -64,13 +52,10 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
-  async *generate({
-    text,
-    options,
-  }: QuestionDraftGenerationInput): AsyncIterable<GeneratedDraftQuestion> {
+  async *generate({ text, options }: QuestionDraftGenerationInput): AsyncIterable<GeneratedDraftQuestion> {
     const messages: ChatMessage[] = [
-      { role: "system", content: buildSystemPrompt(options) },
-      { role: "user", content: buildUserMessage(text) },
+      { role: 'system', content: buildSystemPrompt(options) },
+      { role: 'user', content: buildUserMessage(text) },
     ];
     const tool = new ValidarQuestaoTool();
     const maxTurns = options.quantity * (MAX_CORRECTION_ROUNDS + 1) + 2;
@@ -84,7 +69,7 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
       }
 
       messages.push({
-        role: "assistant",
+        role: 'assistant',
         content: message.content ?? null,
         tool_calls: message.tool_calls,
       });
@@ -94,11 +79,11 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
             ? tool.execute(call.function.arguments)
             : {
                 valid: false,
-                code: "UNKNOWN_TOOL",
+                code: 'UNKNOWN_TOOL',
                 message: `Ferramenta desconhecida: ${String(call.function?.name)}.`,
               };
         messages.push({
-          role: "tool",
+          role: 'tool',
           tool_call_id: call.id,
           name: call.function?.name,
           content: JSON.stringify(result),
@@ -107,7 +92,7 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
     }
 
     throw new AiProviderError(
-      "AI_PROVIDER_BAD_RESPONSE",
+      'AI_PROVIDER_BAD_RESPONSE',
       `O provedor de IA não concluiu a geração. ${MANUAL_IMPORT_HINT}`,
     );
   }
@@ -116,9 +101,9 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
     let response: Response;
     try {
       response = await this.fetchFn(GROQ_CHAT_COMPLETIONS_URL, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${this.apiKey}`,
         },
         // Sem `response_format`: a Groq não aceita structured outputs junto com tool use.
@@ -126,35 +111,35 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
           model: this.model,
           messages,
           tools: [VALIDAR_QUESTAO_TOOL],
-          tool_choice: "auto",
+          tool_choice: 'auto',
           parallel_tool_calls: false,
           stream: false,
         }),
         signal: AbortSignal.timeout(this.timeoutMs),
       });
     } catch (error) {
-      const name = error instanceof Error ? error.name : "";
-      if (name === "TimeoutError" || name === "AbortError") {
+      const name = error instanceof Error ? error.name : '';
+      if (name === 'TimeoutError' || name === 'AbortError') {
         throw new AiProviderError(
-          "AI_PROVIDER_TIMEOUT",
+          'AI_PROVIDER_TIMEOUT',
           `O provedor de IA demorou demais para responder. ${MANUAL_IMPORT_HINT}`,
         );
       }
       throw new AiProviderError(
-        "AI_PROVIDER_ERROR",
+        'AI_PROVIDER_ERROR',
         `Não foi possível falar com o provedor de IA. ${MANUAL_IMPORT_HINT}`,
       );
     }
 
     if (response.status === 429) {
       throw new AiProviderError(
-        "AI_PROVIDER_RATE_LIMITED",
+        'AI_PROVIDER_RATE_LIMITED',
         `O provedor de IA atingiu o limite de uso. ${MANUAL_IMPORT_HINT}`,
       );
     }
     if (!response.ok) {
       throw new AiProviderError(
-        "AI_PROVIDER_ERROR",
+        'AI_PROVIDER_ERROR',
         `O provedor de IA respondeu com erro (HTTP ${response.status}). ${MANUAL_IMPORT_HINT}`,
       );
     }
@@ -165,12 +150,10 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
     } catch {
       data = undefined;
     }
-    const message = (
-      data as { choices?: { message?: ChatMessage }[] } | undefined
-    )?.choices?.[0]?.message;
-    if (typeof message !== "object" || message === null) {
+    const message = (data as { choices?: { message?: ChatMessage }[] } | undefined)?.choices?.[0]?.message;
+    if (typeof message !== 'object' || message === null) {
       throw new AiProviderError(
-        "AI_PROVIDER_BAD_RESPONSE",
+        'AI_PROVIDER_BAD_RESPONSE',
         `O provedor de IA devolveu uma resposta inesperada. ${MANUAL_IMPORT_HINT}`,
       );
     }
@@ -178,14 +161,11 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
   }
 
   /** Itens do JSON final; resposta malformada vira um item que falha o schema (será `rejected`). */
-  private *parseFinalAnswer(
-    content: string | null | undefined,
-  ): Iterable<GeneratedDraftQuestion> {
+  private *parseFinalAnswer(content: string | null | undefined): Iterable<GeneratedDraftQuestion> {
     const questions = extractQuestions(content);
     if (questions === null) {
       yield {
-        malformed:
-          'A resposta do modelo não é um JSON com a lista "questions".',
+        malformed: 'A resposta do modelo não é um JSON com a lista "questions".',
       } as unknown as GeneratedDraftQuestion;
       return;
     }
@@ -193,10 +173,8 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
   }
 }
 
-function extractQuestions(
-  content: string | null | undefined,
-): unknown[] | null {
-  if (typeof content !== "string") {
+function extractQuestions(content: string | null | undefined): unknown[] | null {
+  if (typeof content !== 'string') {
     return null;
   }
   const fenced = /^```(?:json)?\s*([\s\S]*?)\s*```$/.exec(content.trim());

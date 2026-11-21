@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { CreateDraftQuestionUseCase } from '@studyforge/import/application';
+import { CreateDraftQuestionUseCase, GenerateDraftQuestionsUseCase } from '@studyforge/import/application';
+import { AiModule } from './ai/ai.module';
 import { DraftQuestionModule } from './draft-question/draft-question.module';
 import { IdGeneratorModule } from './id-generator/id-generator.module';
 
@@ -8,8 +9,8 @@ import { IdGeneratorModule } from './id-generator/id-generator.module';
  * e expõe os use cases para a api.
  */
 @Module({
-  imports: [IdGeneratorModule, DraftQuestionModule],
-  providers: [CreateDraftQuestionUseCase],
-  exports: [CreateDraftQuestionUseCase],
+  imports: [IdGeneratorModule, DraftQuestionModule, AiModule],
+  providers: [CreateDraftQuestionUseCase, GenerateDraftQuestionsUseCase],
+  exports: [CreateDraftQuestionUseCase, GenerateDraftQuestionsUseCase, AiModule],
 })
 export class ImportInfraModule {}

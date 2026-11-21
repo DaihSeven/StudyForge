@@ -1,7 +1,7 @@
-import { validateDraftQuestionStructure } from "@studyforge/import/domain";
-import { GeneratedDraftQuestionSchema } from "@studyforge/shared/contracts";
-import { ALTERNATIVE_LETTERS, QuestionType } from "@studyforge/shared/domain";
-import { VALIDATE_TOOL_NAME } from "./system-prompt";
+import { validateDraftQuestionStructure } from '@studyforge/import/domain';
+import { GeneratedDraftQuestionSchema } from '@studyforge/shared/contracts';
+import { ALTERNATIVE_LETTERS, QuestionType } from '@studyforge/shared/domain';
+import { VALIDATE_TOOL_NAME } from './system-prompt';
 
 /** Máximo de rodadas de correção por questão (decisão do PR 2). */
 export const MAX_CORRECTION_ROUNDS = 2;
@@ -15,47 +15,45 @@ export interface ToolResult {
 
 /** Definição da tool no formato OpenAI/Groq (`tools`). */
 export const VALIDAR_QUESTAO_TOOL = {
-  type: "function",
+  type: 'function',
   function: {
     name: VALIDATE_TOOL_NAME,
     description:
-      "Valida a estrutura de uma questão (tipo, letras e número de alternativas, número de corretas, textos não vazios). Chame para cada questão antes da resposta final.",
+      'Valida a estrutura de uma questão (tipo, letras e número de alternativas, número de corretas, textos não vazios). Chame para cada questão antes da resposta final.',
     parameters: {
-      type: "object",
+      type: 'object',
       properties: {
         question_number: {
-          type: "integer",
-          description:
-            "Número da questão (1, 2, ...), o mesmo a cada nova tentativa da mesma questão.",
+          type: 'integer',
+          description: 'Número da questão (1, 2, ...), o mesmo a cada nova tentativa da mesma questão.',
         },
         question: {
-          type: "object",
+          type: 'object',
           properties: {
-            type: { type: "string", enum: Object.values(QuestionType) },
-            statement: { type: "string" },
+            type: { type: 'string', enum: Object.values(QuestionType) },
+            statement: { type: 'string' },
             alternatives: {
-              type: "array",
+              type: 'array',
               items: {
-                type: "object",
+                type: 'object',
                 properties: {
-                  letter: { type: "string", enum: [...ALTERNATIVE_LETTERS] },
-                  text: { type: "string" },
-                  isCorrect: { type: "boolean" },
+                  letter: { type: 'string', enum: [...ALTERNATIVE_LETTERS] },
+                  text: { type: 'string' },
+                  isCorrect: { type: 'boolean' },
                 },
-                required: ["letter", "text", "isCorrect"],
+                required: ['letter', 'text', 'isCorrect'],
               },
             },
           },
-          required: ["type", "statement", "alternatives"],
+          required: ['type', 'statement', 'alternatives'],
         },
       },
-      required: ["question_number", "question"],
+      required: ['question_number', 'question'],
     },
   },
 } as const;
 
-const LIMIT_MESSAGE =
-  " Limite de correções desta questão atingido: não tente corrigi-la de novo; siga para a próxima.";
+const LIMIT_MESSAGE = ' Limite de correções desta questão atingido: não tente corrigi-la de novo; siga para a próxima.';
 
 /**
  * Executa `validar_questao` localmente (função pura do domínio + schema do contrato).
@@ -74,19 +72,16 @@ export class ValidarQuestaoTool {
     } catch {
       return {
         valid: false,
-        code: "INVALID_TOOL_ARGUMENTS",
-        message: "Os argumentos da ferramenta não são um JSON válido.",
+        code: 'INVALID_TOOL_ARGUMENTS',
+        message: 'Os argumentos da ferramenta não são um JSON válido.',
       };
     }
-    const record =
-      typeof args === "object" && args !== null
-        ? (args as Record<string, unknown>)
-        : {};
-    const questionNumber = Number.isInteger(record["question_number"])
-      ? (record["question_number"] as number)
+    const record = typeof args === 'object' && args !== null ? (args as Record<string, unknown>) : {};
+    const questionNumber = Number.isInteger(record['question_number'])
+      ? (record['question_number'] as number)
       : this.calls;
 
-    const failure = this.check(record["question"]);
+    const failure = this.check(record['question']);
     if (!failure) {
       return { valid: true };
     }
@@ -108,15 +103,11 @@ export class ValidarQuestaoTool {
     const parsed = GeneratedDraftQuestionSchema.safeParse(question);
     if (!parsed.success) {
       return {
-        code: "INVALID_GENERATED_FORMAT",
-        message: parsed.error.issues
-          .map((i) => `${i.path.join(".")}: ${i.message}`)
-          .join("; "),
+        code: 'INVALID_GENERATED_FORMAT',
+        message: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
       };
     }
     const result = validateDraftQuestionStructure(parsed.data);
-    return result.isErr()
-      ? { code: result.error.code, message: result.error.message }
-      : null;
+    return result.isErr() ? { code: result.error.code, message: result.error.message } : null;
   }
 }

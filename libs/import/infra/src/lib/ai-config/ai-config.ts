@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const AI_CONFIG_TOKEN = Symbol('AiConfig');
+
 export type AiProviderName = 'mock' | 'groq' | 'google';
 
 export interface AiConfig {

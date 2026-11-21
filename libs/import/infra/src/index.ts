@@ -11,3 +11,4 @@ export * from './lib/groq/system-prompt';
 export * from './lib/groq/ai-provider.error';
 export * from './lib/groq/groq-question-draft-generator.adapter';
 export * from './lib/ai/create-question-draft-generator';
+export * from './lib/ai/ai.module';
