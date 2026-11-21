@@ -61,7 +61,7 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
     const maxTurns = options.quantity * (MAX_CORRECTION_ROUNDS + 1) + 2;
 
     for (let turn = 0; turn < maxTurns; turn++) {
-      const message = await this.complete(messages);
+      const message = await this.complete(messages, turn === 0);
 
       if (!message.tool_calls?.length) {
         yield* this.parseFinalAnswer(message.content);
@@ -97,7 +97,8 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
     );
   }
 
-  private async complete(messages: ChatMessage[]): Promise<ChatMessage> {
+  /** `firstRequest`: ainda não houve nenhuma resposta do provedor, então falhas transitórias são devolvíveis (cota). */
+  private async complete(messages: ChatMessage[], firstRequest: boolean): Promise<ChatMessage> {
     let response: Response;
     try {
       response = await this.fetchFn(GROQ_CHAT_COMPLETIONS_URL, {
@@ -123,11 +124,13 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
         throw new AiProviderError(
           'AI_PROVIDER_TIMEOUT',
           `O provedor de IA demorou demais para responder. ${MANUAL_IMPORT_HINT}`,
+          firstRequest,
         );
       }
       throw new AiProviderError(
         'AI_PROVIDER_ERROR',
         `Não foi possível falar com o provedor de IA. ${MANUAL_IMPORT_HINT}`,
+        firstRequest,
       );
     }
 
@@ -135,12 +138,14 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
       throw new AiProviderError(
         'AI_PROVIDER_RATE_LIMITED',
         `O provedor de IA atingiu o limite de uso. ${MANUAL_IMPORT_HINT}`,
+        firstRequest,
       );
     }
     if (!response.ok) {
       throw new AiProviderError(
         'AI_PROVIDER_ERROR',
         `O provedor de IA respondeu com erro (HTTP ${response.status}). ${MANUAL_IMPORT_HINT}`,
+        firstRequest && response.status >= 500,
       );
     }
 
