@@ -91,4 +91,75 @@ describe('InMemoryAiUsageLimiterAdapter', () => {
     expect(() => new InMemoryAiUsageLimiterAdapter({ clock, dailyLimitGlobal: limit })).toThrow(RangeError);
     expect(() => new InMemoryAiUsageLimiterAdapter({ clock, dailyLimitGlobal: 1, dailyLimitPerMentor: limit })).toThrow(RangeError);
   });
+
+  describe('remaining', () => {
+    it('starts at the limits and decreases by one per consumption (mentor and global)', async () => {
+      const limiter = new InMemoryAiUsageLimiterAdapter({ clock, dailyLimitGlobal: 5, dailyLimitPerMentor: 3 });
+
+      expect(await limiter.remaining(mentor(1))).toEqual({ mentor: 3, global: 5 });
+      await limiter.tryConsume(mentor(1));
+      await limiter.tryConsume(mentor(2));
+
+      expect(await limiter.remaining(mentor(1))).toEqual({ mentor: 2, global: 3 });
+      expect(await limiter.remaining(mentor(2))).toEqual({ mentor: 2, global: 3 });
+    });
+
+    it('never goes below zero and does not change when a consumption is refused', async () => {
+      const limiter = new InMemoryAiUsageLimiterAdapter({ clock, dailyLimitGlobal: 5, dailyLimitPerMentor: 1 });
+      await limiter.tryConsume(mentor(1));
+      await limiter.tryConsume(mentor(1));
+
+      expect(await limiter.remaining(mentor(1))).toEqual({ mentor: 0, global: 4 });
+    });
+
+    it('reflects the reset when the day changes', async () => {
+      const limiter = new InMemoryAiUsageLimiterAdapter({ clock, dailyLimitGlobal: 5, dailyLimitPerMentor: 3 });
+      await limiter.tryConsume(mentor(1));
+      clock.day = '2026-11-22';
+
+      expect(await limiter.remaining(mentor(1))).toEqual({ mentor: 3, global: 5 });
+    });
+  });
+
+  describe('refund', () => {
+    it('gives back one unit to the mentor and to the global ceiling', async () => {
+      const limiter = new InMemoryAiUsageLimiterAdapter({ clock, dailyLimitGlobal: 5, dailyLimitPerMentor: 3 });
+      await limiter.tryConsume(mentor(1));
+      await limiter.tryConsume(mentor(1));
+
+      await limiter.refund(mentor(1));
+
+      expect(await limiter.remaining(mentor(1))).toEqual({ mentor: 2, global: 4 });
+    });
+
+    it('lets the mentor consume again after hitting the limit and being refunded', async () => {
+      const limiter = new InMemoryAiUsageLimiterAdapter({ clock, dailyLimitGlobal: 5, dailyLimitPerMentor: 1 });
+      await limiter.tryConsume(mentor(1));
+      expect((await limiter.tryConsume(mentor(1))).isErr()).toBe(true);
+
+      await limiter.refund(mentor(1));
+
+      expect((await limiter.tryConsume(mentor(1))).isOk()).toBe(true);
+    });
+
+    it('never goes below zero used (refund without a previous consumption changes nothing)', async () => {
+      const limiter = new InMemoryAiUsageLimiterAdapter({ clock, dailyLimitGlobal: 5, dailyLimitPerMentor: 3 });
+      await limiter.tryConsume(mentor(2));
+
+      await limiter.refund(mentor(1));
+
+      expect(await limiter.remaining(mentor(1))).toEqual({ mentor: 3, global: 4 });
+    });
+
+    it('does not refund a consumption from a previous day (the counters were reset)', async () => {
+      const limiter = new InMemoryAiUsageLimiterAdapter({ clock, dailyLimitGlobal: 5, dailyLimitPerMentor: 3 });
+      await limiter.tryConsume(mentor(1));
+      clock.day = '2026-11-22';
+      await limiter.tryConsume(mentor(2));
+
+      await limiter.refund(mentor(1));
+
+      expect(await limiter.remaining(mentor(2))).toEqual({ mentor: 2, global: 4 });
+    });
+  });
 });

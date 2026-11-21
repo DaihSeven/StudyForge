@@ -1,8 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DraftQuestion, InvalidGenerationRequestError } from '@studyforge/import/domain';
-import { GeneratedDraftQuestionSchema } from '@studyforge/shared/contracts';
+import { GeneratedDraftQuestionSchema, MAX_GENERATION_QUANTITY } from '@studyforge/shared/contracts';
 import { DomainError, EntityId, err, ok, OrganizationId, QUESTION_TYPE_RULES, Result } from '@studyforge/shared/domain';
-import { AI_USAGE_LIMITER_TOKEN, AiUsageLimiter } from '../ports/ai-usage-limiter.port';
+import { GenerationFailedError, QuestionDraftGeneratorError } from '../errors/generation.errors';
+import { AI_USAGE_LIMITER_TOKEN, AiUsageLimiter, AiUsageRemaining } from '../ports/ai-usage-limiter.port';
 import { QUESTION_DRAFT_GENERATOR_TOKEN, QuestionDraftGenerator } from '../ports/question-draft-generator.port';
 import { CreateDraftQuestionUseCase } from './create-draft-question.use-case';
 
@@ -24,7 +25,20 @@ export interface RejectedGeneratedDraft {
 export interface GenerateDraftQuestionsOutput {
   readonly drafts: readonly DraftQuestion[];
   readonly rejected: readonly RejectedGeneratedDraft[];
+  /** Uso restante do mentor e da plataforma, depois de cobrar esta geração. */
+  readonly usage: AiUsageRemaining;
+  /** Presente quando nenhum item foi aproveitado: explica ao mentor que a tentativa contou. */
+  readonly notice?: string;
 }
+
+/** Chamado a cada item assim que ele é processado, para quem quiser transmitir (streaming) o andamento. */
+export interface GenerationListener {
+  onDraft?(draft: DraftQuestion, index: number): void | Promise<void>;
+  onRejected?(rejected: RejectedGeneratedDraft): void | Promise<void>;
+}
+
+const ALL_REJECTED_NOTICE =
+  'Nenhuma questão gerada passou na validação. Esta tentativa contou no seu limite diário e não é devolvida. Tente de novo com um texto mais claro ou use a importação manual (JSON ou Markdown).';
 
 const SUPPORTED_ALTERNATIVE_COUNTS = Object.values(QUESTION_TYPE_RULES).map((rules) => rules.letters.length);
 
@@ -42,7 +56,10 @@ export class GenerateDraftQuestionsUseCase {
     private readonly createDraftQuestion: CreateDraftQuestionUseCase,
   ) {}
 
-  async execute(command: GenerateDraftQuestionsCommand): Promise<Result<GenerateDraftQuestionsOutput, DomainError>> {
+  async execute(
+    command: GenerateDraftQuestionsCommand,
+    listener: GenerationListener = {},
+  ): Promise<Result<GenerateDraftQuestionsOutput, DomainError>> {
     let mentorId: EntityId;
     try {
       OrganizationId.create(command.organizationId);
@@ -73,21 +90,42 @@ export class GenerateDraftQuestionsUseCase {
       options: { quantity: command.quantity, alternativesPerQuestion: command.alternativesPerQuestion },
     });
 
-    for await (const item of stream) {
-      if (index >= command.quantity) {
-        break;
-      }
+    try {
+      for await (const item of stream) {
+        if (index >= command.quantity) {
+          break;
+        }
 
-      const outcome = await this.saveGenerated(command.organizationId, item);
-      if (outcome.isOk()) {
-        drafts.push(outcome.value);
-      } else {
-        rejected.push({ index, ...outcome.error });
+        const outcome = await this.saveGenerated(command.organizationId, item);
+        if (outcome.isOk()) {
+          drafts.push(outcome.value);
+          await listener.onDraft?.(outcome.value, index);
+        } else {
+          const rejection = { index, ...outcome.error };
+          rejected.push(rejection);
+          await listener.onRejected?.(rejection);
+        }
+        index += 1;
       }
-      index += 1;
+    } catch (error) {
+      if (!(error instanceof QuestionDraftGeneratorError)) {
+        throw error;
+      }
+      // Só devolve a cota se o provedor falhou antes de qualquer resposta; com resposta recebida, a tentativa contou.
+      const refund = error.refundable && index === 0;
+      if (refund) {
+        await this.limiter.refund(mentorId);
+      }
+      throw new GenerationFailedError(error, refund);
     }
 
-    return ok({ drafts, rejected });
+    const usageLeft = await this.limiter.remaining(mentorId);
+    return ok({
+      drafts,
+      rejected,
+      usage: usageLeft,
+      ...(drafts.length === 0 && rejected.length > 0 ? { notice: ALL_REJECTED_NOTICE } : {}),
+    });
   }
 
   /** Valida o formato (schema) e a regra do domínio de um item gerado e, se válido, salva o rascunho. */
@@ -107,8 +145,11 @@ export class GenerateDraftQuestionsUseCase {
     if (typeof command.text !== 'string' || command.text.trim() === '') {
       return new InvalidGenerationRequestError('EMPTY_TEXT', 'The source text cannot be empty.');
     }
-    if (!Number.isInteger(command.quantity) || command.quantity < 1) {
-      return new InvalidGenerationRequestError('INVALID_QUANTITY', 'Quantity must be a positive integer.');
+    if (!Number.isInteger(command.quantity) || command.quantity < 1 || command.quantity > MAX_GENERATION_QUANTITY) {
+      return new InvalidGenerationRequestError(
+        'INVALID_QUANTITY',
+        `Quantity must be an integer from 1 to ${MAX_GENERATION_QUANTITY}.`,
+      );
     }
     if (!SUPPORTED_ALTERNATIVE_COUNTS.includes(command.alternativesPerQuestion)) {
       return new InvalidGenerationRequestError(

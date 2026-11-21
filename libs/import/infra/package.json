@@ -12,6 +12,7 @@
     "@studyforge/shared/prisma": "0.0.1",
     "@studyforge/import/domain": "0.0.1",
     "@studyforge/shared/contracts": "0.0.1",
-    "@studyforge/shared/domain": "0.0.1"
+    "@studyforge/shared/domain": "0.0.1",
+    "zod": "^4.6.5"
   }
 }
