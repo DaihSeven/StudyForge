@@ -207,22 +207,55 @@ describe('POST /api/draft-questions/generate', () => {
     expect((await response.json()).code).toBe('AI_GLOBAL_DAILY_LIMIT_EXCEEDED');
   });
 
-  it('answers 429 when the provider itself is rate limited, before any event was sent', async () => {
+  it('answers 429 when the provider is rate limited before any event, saying the attempt did not count', async () => {
     await start(
       {},
-      new FakeGenerator(
-        [],
-        new AiProviderError('AI_PROVIDER_RATE_LIMITED', 'Limite do provedor. Use a importação manual.'),
-      ),
+      new FakeGenerator([], new AiProviderError('AI_PROVIDER_RATE_LIMITED', 'Limite do provedor.', true)),
     );
 
     const response = await post(body());
 
     expect(response.status).toBe(429);
-    expect((await response.json()).code).toBe('AI_PROVIDER_RATE_LIMITED');
+    const error = await response.json();
+    expect(error.code).toBe('AI_PROVIDER_RATE_LIMITED');
+    expect(error.message).toContain('Limite do provedor.');
+    expect(error.message).toContain('não contou');
   });
 
-  it('answers 502 for other provider failures before any event was sent, without leaking details', async () => {
+  it('gives the quota back after a failure before any response: the next request still goes through', async () => {
+    const generator = {
+      calls: 0,
+      async *generate() {
+        this.calls += 1;
+        if (this.calls === 1) {
+          throw new AiProviderError('AI_PROVIDER_TIMEOUT', 'Demorou demais.', true);
+        }
+        yield validItem();
+      },
+    };
+    await start({ AI_DAILY_LIMIT_PER_MENTOR: '1' }, generator);
+
+    expect((await post(body())).status).toBe(502);
+    const events = parseSse(await (await post(body({ quantity: 1 }))).text());
+
+    expect(events.map((e) => e.event)).toEqual(['draft', 'done']);
+  });
+
+  it('answers 502 and says the attempt counted when the failure is not refundable, without leaking details', async () => {
+    await start(
+      { AI_DAILY_LIMIT_PER_MENTOR: '1' },
+      new FakeGenerator([], new AiProviderError('AI_PROVIDER_ERROR', 'Erro HTTP 401 gsk_secret.', false)),
+    );
+
+    const response = await post(body());
+    const text = await response.text();
+
+    expect(response.status).toBe(502);
+    expect(text).toContain('Esta tentativa contou');
+    expect((await post(body())).status).toBe(429);
+  });
+
+  it('answers 502 GENERATION_FAILED for an unknown failure, without leaking its message', async () => {
     await start({}, new FakeGenerator([], new Error('boom gsk_secret')));
 
     const response = await post(body());
@@ -238,7 +271,7 @@ describe('POST /api/draft-questions/generate', () => {
       {},
       new FakeGenerator(
         [validItem()],
-        new AiProviderError('AI_PROVIDER_TIMEOUT', 'Demorou demais. Use a importação manual.'),
+        new AiProviderError('AI_PROVIDER_TIMEOUT', 'Demorou demais.', true),
       ),
     );
 
@@ -247,9 +280,8 @@ describe('POST /api/draft-questions/generate', () => {
 
     expect(response.status).toBe(200);
     expect(events.map((e) => e.event)).toEqual(['draft', 'error']);
-    expect(events[1].data).toEqual({
-      code: 'AI_PROVIDER_TIMEOUT',
-      message: 'Demorou demais. Use a importação manual.',
-    });
+    expect(events[1].data.code).toBe('AI_PROVIDER_TIMEOUT');
+    expect(events[1].data.message).toContain('Demorou demais.');
+    expect(events[1].data.message).toContain('Esta tentativa contou');
   });
 });
