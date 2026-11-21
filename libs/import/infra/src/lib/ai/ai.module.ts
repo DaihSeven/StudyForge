@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { AI_USAGE_LIMITER_TOKEN, CLOCK_TOKEN, QUESTION_DRAFT_GENERATOR_TOKEN } from '@studyforge/import/application';
-import { AI_CONFIG_TOKEN, AiConfig, loadAiConfig } from '../ai-config/ai-config';
+import { AI_CONFIG_TOKEN, AiConfig, buildAiStartupWarnings, loadAiConfig } from '../ai-config/ai-config';
 import { InMemoryAiUsageLimiterAdapter } from '../ai-usage-limiter/in-memory-ai-usage-limiter.adapter';
 import { SaoPauloClockAdapter } from '../clock/sao-paulo-clock.adapter';
 import { createQuestionDraftGenerator } from './create-question-draft-generator';

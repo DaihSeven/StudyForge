@@ -23,18 +23,18 @@ export class AiConfigError extends Error {
   }
 }
 
-/** Teto global padrão (gerações/dia), abaixo da cota gratuita da Groq; reconferir no console do provedor. */
-export const DEFAULT_DAILY_LIMIT_GLOBAL = 100;
+/** Teto global padrão (gerações/dia), provisório e abaixo da cota gratuita da Groq; reconferir no console do provedor. */
+export const DEFAULT_DAILY_LIMIT_GLOBAL = 40;
 
 const optionalText = z.preprocess((value) => (value === '' ? undefined : value), z.string().optional());
 const positiveInt = (fallback: number) =>
-  z.preprocess(
-    (value) => (value === undefined || value === '' ? fallback : Number(value)),
-    z.number().int().min(1),
-  );
+  z.preprocess((value) => (value === undefined || value === '' ? fallback : Number(value)), z.number().int().min(1));
 
 const EnvSchema = z.object({
-  AI_PROVIDER: z.preprocess((value) => (value === '' ? undefined : value), z.enum(['mock', 'groq', 'google']).default('mock')),
+  AI_PROVIDER: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.enum(['mock', 'groq', 'google']).default('mock'),
+  ),
   AI_MODEL: optionalText,
   GROQ_API_KEY: optionalText,
   GOOGLE_GENERATIVE_AI_API_KEY: optionalText,
@@ -59,7 +59,9 @@ export function loadAiConfig(env: AiEnv): AiConfig {
   const keyVariable = values.AI_PROVIDER === 'mock' ? undefined : KEY_VARIABLE[values.AI_PROVIDER];
   const apiKey = keyVariable ? values[keyVariable] : undefined;
   if (keyVariable && !apiKey) {
-    throw new AiConfigError(`AI_PROVIDER=${values.AI_PROVIDER} requires ${keyVariable}. Set it or use AI_PROVIDER=mock.`);
+    throw new AiConfigError(
+      `AI_PROVIDER=${values.AI_PROVIDER} requires ${keyVariable}. Set it or use AI_PROVIDER=mock.`,
+    );
   }
   return {
     provider: values.AI_PROVIDER,
@@ -85,6 +87,8 @@ export function describeAiConfig(config: AiConfig): string {
 
 /** Avisos a logar na subida (nunca contêm a chave). */
 export function buildAiStartupWarnings(config: AiConfig): string[] {
-  void config;
-  throw new Error('buildAiStartupWarnings ainda não implementado.');
+  if (config.provider === 'mock') {
+    return [];
+  }
+  return [`AI_PROVIDER=${config.provider}: endpoint sem autenticação até o Marco 3.2; não expor publicamente.`];
 }
