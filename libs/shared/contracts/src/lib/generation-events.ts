@@ -53,6 +53,25 @@ export type GenerationEvent =
  * Valida o par (nome do evento, JSON já decodificado). Devolve `null` se o nome for desconhecido
  * ou o dado não tiver a forma esperada.
  */
-export function parseGenerationEvent(_event: string, _data: unknown): GenerationEvent | null {
-  throw new Error('parseGenerationEvent ainda não implementado.');
+export function parseGenerationEvent(event: string, data: unknown): GenerationEvent | null {
+  switch (event) {
+    case 'draft': {
+      const parsed = DraftEventSchema.safeParse(data);
+      return parsed.success ? { event, data: parsed.data } : null;
+    }
+    case 'rejected': {
+      const parsed = RejectedEventSchema.safeParse(data);
+      return parsed.success ? { event, data: parsed.data } : null;
+    }
+    case 'done': {
+      const parsed = DoneEventSchema.safeParse(data);
+      return parsed.success ? { event, data: parsed.data } : null;
+    }
+    case 'error': {
+      const parsed = GenerationErrorSchema.safeParse(data);
+      return parsed.success ? { event, data: parsed.data } : null;
+    }
+    default:
+      return null;
+  }
 }
