@@ -76,7 +76,8 @@
     "zod": "^4.6.5"
   },
   "overrides": {
-    "multer": "^2.5.0"
+    "multer": "^2.5.0",
+    "effect": "^3.22.1"
   },
   "allowScripts": {
     "@parcel/watcher@2.6.0": true,
