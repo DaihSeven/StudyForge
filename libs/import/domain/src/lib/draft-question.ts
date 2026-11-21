@@ -1,28 +1,12 @@
 import {
   Alternative,
-  DomainError,
   EntityId,
   InvalidEntityIdError,
   InvalidOrganizationIdError,
-  isQuestionType,
   OrganizationId,
-  QUESTION_TYPE_RULES,
   QuestionType,
 } from '@studyforge/shared/domain';
-
-export type InvalidDraftQuestionCode =
-  | 'INVALID_QUESTION_TYPE'
-  | 'INVALID_ALTERNATIVE_COUNT'
-  | 'INVALID_ALTERNATIVE_LETTERS'
-  | 'INVALID_CORRECT_COUNT'
-  | 'EMPTY_STATEMENT'
-  | 'EMPTY_ALTERNATIVE_TEXT';
-
-export class InvalidDraftQuestionError extends DomainError<InvalidDraftQuestionCode> {
-  constructor(code: InvalidDraftQuestionCode, message: string) {
-    super(code, message);
-  }
-}
+import { validateDraftQuestionStructure } from './validate-draft-question-structure';
 
 export interface DraftQuestionProps {
   readonly id: EntityId;
@@ -53,48 +37,11 @@ export class DraftQuestion {
     if (!(props.organizationId instanceof OrganizationId)) {
       throw new InvalidOrganizationIdError();
     }
-    if (!isQuestionType(props.type)) {
-      throw new InvalidDraftQuestionError('INVALID_QUESTION_TYPE', `Unknown question type "${String(props.type)}".`);
+    const structure = validateDraftQuestionStructure(props);
+    if (structure.isErr()) {
+      throw structure.error;
     }
 
-    const rules = QUESTION_TYPE_RULES[props.type];
-
-    if (props.alternatives.length !== rules.letters.length) {
-      throw new InvalidDraftQuestionError(
-        'INVALID_ALTERNATIVE_COUNT',
-        `${props.type} requires ${rules.letters.length} alternatives, got ${props.alternatives.length}.`,
-      );
-    }
-
-    const sorted = [...props.alternatives].sort((a, b) => (a.letter < b.letter ? -1 : a.letter > b.letter ? 1 : 0));
-
-    if (sorted.some((alternative, index) => alternative.letter !== rules.letters[index])) {
-      throw new InvalidDraftQuestionError(
-        'INVALID_ALTERNATIVE_LETTERS',
-        `${props.type} requires alternatives ${rules.letters.join(', ')}, got ${sorted.map((a) => a.letter).join(', ')}.`,
-      );
-    }
-
-    const correctCount = sorted.filter((alternative) => alternative.isCorrect).length;
-    if (correctCount !== rules.correctCount) {
-      throw new InvalidDraftQuestionError(
-        'INVALID_CORRECT_COUNT',
-        `${props.type} requires exactly ${rules.correctCount} correct alternative(s), got ${correctCount}.`,
-      );
-    }
-
-    if (typeof props.statement !== 'string' || props.statement.trim() === '') {
-      throw new InvalidDraftQuestionError('EMPTY_STATEMENT', 'Statement cannot be empty.');
-    }
-
-    const emptyText = sorted.find((alternative) => alternative.text.trim() === '');
-    if (emptyText) {
-      throw new InvalidDraftQuestionError(
-        'EMPTY_ALTERNATIVE_TEXT',
-        `Alternative ${emptyText.letter} text cannot be empty.`,
-      );
-    }
-
-    return Object.freeze(new DraftQuestion(props.id, props.organizationId, props.type, props.statement, Object.freeze(sorted)));
+    return Object.freeze(new DraftQuestion(props.id, props.organizationId, props.type, props.statement, Object.freeze(structure.value)));
   }
 }

@@ -1,5 +1,5 @@
 import { AlternativeProps, err, isQuestionType, ok, QUESTION_TYPE_RULES, QuestionType, Result } from '@studyforge/shared/domain';
-import { InvalidDraftQuestionError } from './draft-question';
+import { InvalidDraftQuestionError } from './invalid-draft-question.error';
 
 export interface DraftQuestionStructure<A extends AlternativeProps = AlternativeProps> {
   readonly type: QuestionType;
