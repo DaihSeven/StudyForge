@@ -19,7 +19,10 @@ const validItem = (statement = 'O que é AWS?') => ({
   statement,
   alternatives: [alt('A', true), alt('B', false), alt('C', false), alt('D', false)],
 });
-const invalidItem = { ...validItem(), alternatives: [alt('A', true), alt('B', true), alt('C', false), alt('D', false)] };
+const invalidItem = {
+  ...validItem(),
+  alternatives: [alt('A', true), alt('B', true), alt('C', false), alt('D', false)],
+};
 
 const body = (overrides: Record<string, unknown> = {}) => ({
   organizationId: 'org-1',
@@ -117,7 +120,11 @@ describe('POST /api/draft-questions/generate', () => {
     expect(response.headers.get('content-type')).toContain('text/event-stream');
     expect(events.map((e) => e.event)).toEqual(['draft', 'draft', 'draft', 'done']);
     expect(events[0].data).toMatchObject({ index: 0, type: 'SINGLE_CHOICE', alternatives: expect.any(Array) });
-    expect(events[0].data.alternatives[0]).toEqual({ letter: 'A', text: expect.any(String), isCorrect: expect.any(Boolean) });
+    expect(events[0].data.alternatives[0]).toEqual({
+      letter: 'A',
+      text: expect.any(String),
+      isCorrect: expect.any(Boolean),
+    });
     expect(events[3].data).toEqual({ draftCount: 3, rejectedCount: 0, usage: { mentor: 9, global: 99 } });
   });
 
@@ -200,7 +207,13 @@ describe('POST /api/draft-questions/generate', () => {
   });
 
   it('answers 429 when the provider itself is rate limited, before any event was sent', async () => {
-    await start({}, new FakeGenerator([], new AiProviderError('AI_PROVIDER_RATE_LIMITED', 'Limite do provedor. Use a importação manual.')));
+    await start(
+      {},
+      new FakeGenerator(
+        [],
+        new AiProviderError('AI_PROVIDER_RATE_LIMITED', 'Limite do provedor. Use a importação manual.'),
+      ),
+    );
 
     const response = await post(body());
 
@@ -220,13 +233,22 @@ describe('POST /api/draft-questions/generate', () => {
   });
 
   it('sends an error event and ends the stream when the generator fails after some drafts', async () => {
-    await start({}, new FakeGenerator([validItem()], new AiProviderError('AI_PROVIDER_TIMEOUT', 'Demorou demais. Use a importação manual.')));
+    await start(
+      {},
+      new FakeGenerator(
+        [validItem()],
+        new AiProviderError('AI_PROVIDER_TIMEOUT', 'Demorou demais. Use a importação manual.'),
+      ),
+    );
 
     const response = await post(body());
     const events = parseSse(await response.text());
 
     expect(response.status).toBe(200);
     expect(events.map((e) => e.event)).toEqual(['draft', 'error']);
-    expect(events[1].data).toEqual({ code: 'AI_PROVIDER_TIMEOUT', message: 'Demorou demais. Use a importação manual.' });
+    expect(events[1].data).toEqual({
+      code: 'AI_PROVIDER_TIMEOUT',
+      message: 'Demorou demais. Use a importação manual.',
+    });
   });
 });
