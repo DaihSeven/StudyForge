@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { DRAFT_QUESTION_REPOSITORY_TOKEN, QUESTION_DRAFT_GENERATOR_TOKEN } from '@studyforge/import/application';
+import { DraftQuestion } from '@studyforge/import/domain';
 import { AiProviderError } from '@studyforge/import/infra';
 import { PrismaService } from '@studyforge/shared/prisma';
 import { DraftQuestionModule } from './draft-question.module';
@@ -128,14 +129,14 @@ describe('POST /api/draft-questions/generate', () => {
     expect(events[3].data).toEqual({ draftCount: 3, rejectedCount: 0, usage: { mentor: 9, global: 99 } });
   });
 
-  it('saves the drafts under the request organizationId and never publishes', async () => {
+  it('saves each generated item as a DraftQuestion under the request organizationId', async () => {
     await start();
 
     await (await post(body({ quantity: 2, organizationId: 'org-77' }))).text();
 
     expect(repositorySaves).toHaveLength(2);
     expect(repositorySaves[0].organizationId.value).toBe('org-77');
-    expect(Object.keys(repositorySaves[0])).not.toEqual(expect.arrayContaining(['published']));
+    expect(repositorySaves.every((saved) => saved instanceof DraftQuestion)).toBe(true);
   });
 
   it('sends rejected events for invalid items and a notice in done when every item was rejected', async () => {
