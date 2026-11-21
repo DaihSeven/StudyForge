@@ -1,7 +1,7 @@
 import { Body, Controller, HttpException, HttpStatus, Inject, Post, Res } from '@nestjs/common';
-import { GenerateDraftQuestionsUseCase } from '@studyforge/import/application';
+import { GenerateDraftQuestionsUseCase, GenerationFailedError } from '@studyforge/import/application';
 import { AiUsageLimitExceededError, DraftQuestion } from '@studyforge/import/domain';
-import { AI_CONFIG_TOKEN, AiConfig, AiProviderError } from '@studyforge/import/infra';
+import { AI_CONFIG_TOKEN, AiConfig } from '@studyforge/import/infra';
 import { createGenerateDraftQuestionsRequestSchema, GenerateDraftQuestionsRequest } from '@studyforge/shared/contracts';
 import type { Response } from 'express';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe';
@@ -19,9 +19,12 @@ function toDraftEvent(draft: DraftQuestion, index: number) {
   };
 }
 
-/** Falha do gerador → código e mensagem seguros (nunca a mensagem bruta de um erro desconhecido). */
+/**
+ * Falha do gerador → código e mensagem seguros. `GenerationFailedError` já traz uma mensagem própria
+ * para o mentor (inclusive se a tentativa contou); qualquer outro erro vira uma mensagem genérica.
+ */
 function toSafeError(error: unknown): { status: HttpStatus; code: string; message: string } {
-  if (error instanceof AiProviderError) {
+  if (error instanceof GenerationFailedError) {
     const status = error.code === 'AI_PROVIDER_RATE_LIMITED' ? HttpStatus.TOO_MANY_REQUESTS : HttpStatus.BAD_GATEWAY;
     return { status, code: error.code, message: error.message };
   }

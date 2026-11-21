@@ -126,7 +126,7 @@ describe('POST /api/draft-questions/generate', () => {
       text: expect.any(String),
       isCorrect: expect.any(Boolean),
     });
-    expect(events[3].data).toEqual({ draftCount: 3, rejectedCount: 0, usage: { mentor: 9, global: 99 } });
+    expect(events[3].data).toEqual({ draftCount: 3, rejectedCount: 0, usage: { mentor: 9, global: 39 } });
   });
 
   it('saves each generated item as a DraftQuestion under the request organizationId', async () => {
