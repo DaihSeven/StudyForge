@@ -90,8 +90,10 @@ viola essas regras, deve corrigi-la ou sinalizar, não ignorar.
 
 - Adicionar microserviços, filas de mensagens, ou múltiplos bancos de dados.
 - Adicionar importers de PDF/DOCX antes da Etapa em que forem priorizados.
-- Adicionar IA paga ou dependência externa de provedor de IA ao projeto (decisão
-  fechada no ADR-004: importação por modelo estruturado, sem IA paga).
+- Adicionar IA fora das condições do [ADR-010](docs/adrs/adr-010-ia-opcional-na-geracao-de-rascunhos.md).
+  IA é permitida SOMENTE como adaptador opcional e gratuito, atrás do port
+  `QuestionDraftGenerator`, com `mock` como padrão e CI sempre sem chamada real.
+  Nunca publica (regra 7 da seção 2 continua valendo). IA paga continua proibida.
 - Introduzir novos tipos de questão (dissertativa, verdadeiro/falso) no MVP.
 - Implementar lógica de aprovação ou código de entrada de organização — fora do
   escopo. O convite por link já está decidido no ADR-005 (Marcos 3.1 e 3.2).
@@ -105,7 +107,9 @@ O projeto é dividido em etapas incrementais definidas pelo usuário. Claude dev
    etapas") antes de gerar código ou estrutura de projeto.
 2. Não antecipar trabalho de etapas futuras (ex.: não implementar IA de extração
    ou publicação de quiz enquanto a etapa corrente é só o fluxo de importação
-   básica).
+   básica). Nota: a camada de IA (Semanas 11 a 13 do curso) foi incluída no
+   escopo pelo ADR-010; a implementação só começa em PR próprio, depois de o
+   ADR-010 ser aceito.
 3. Ao propor mudanças estruturais (nova lib, nova dependência entre libs, nova
    fronteira), explicar o racional antes de implementar — mudanças de arquitetura
    não são silenciosas neste projeto.
