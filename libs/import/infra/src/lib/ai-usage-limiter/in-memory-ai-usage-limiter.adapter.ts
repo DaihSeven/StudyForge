@@ -1,4 +1,4 @@
-import { AiUsageLimiter, Clock } from '@studyforge/import/application';
+import { AiUsageLimiter, AiUsageRemaining, Clock } from '@studyforge/import/application';
 import { AiUsageLimitExceededError } from '@studyforge/import/domain';
 import { EntityId, err, ok, Result } from '@studyforge/shared/domain';
 
@@ -53,6 +53,11 @@ export class InMemoryAiUsageLimiterAdapter implements AiUsageLimiter {
     this.perMentorCount.set(mentorId.value, mentorCount + 1);
     this.globalCount += 1;
     return ok(undefined);
+  }
+
+  async remaining(mentorId: EntityId): Promise<AiUsageRemaining> {
+    void mentorId;
+    throw new Error('InMemoryAiUsageLimiterAdapter.remaining ainda não implementado.');
   }
 
   private resetIfNewDay(): void {

@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DraftQuestion, InvalidGenerationRequestError } from '@studyforge/import/domain';
 import { GeneratedDraftQuestionSchema } from '@studyforge/shared/contracts';
 import { DomainError, EntityId, err, ok, OrganizationId, QUESTION_TYPE_RULES, Result } from '@studyforge/shared/domain';
-import { AI_USAGE_LIMITER_TOKEN, AiUsageLimiter } from '../ports/ai-usage-limiter.port';
+import { AI_USAGE_LIMITER_TOKEN, AiUsageLimiter, AiUsageRemaining } from '../ports/ai-usage-limiter.port';
 import { QUESTION_DRAFT_GENERATOR_TOKEN, QuestionDraftGenerator } from '../ports/question-draft-generator.port';
 import { CreateDraftQuestionUseCase } from './create-draft-question.use-case';
 
@@ -24,6 +24,16 @@ export interface RejectedGeneratedDraft {
 export interface GenerateDraftQuestionsOutput {
   readonly drafts: readonly DraftQuestion[];
   readonly rejected: readonly RejectedGeneratedDraft[];
+  /** Uso restante do mentor e da plataforma, depois de cobrar esta geração. */
+  readonly usage: AiUsageRemaining;
+  /** Presente quando nenhum item foi aproveitado: explica ao mentor que a tentativa contou. */
+  readonly notice?: string;
+}
+
+/** Chamado a cada item assim que ele é processado, para quem quiser transmitir (streaming) o andamento. */
+export interface GenerationListener {
+  onDraft?(draft: DraftQuestion, index: number): void | Promise<void>;
+  onRejected?(rejected: RejectedGeneratedDraft): void | Promise<void>;
 }
 
 const SUPPORTED_ALTERNATIVE_COUNTS = Object.values(QUESTION_TYPE_RULES).map((rules) => rules.letters.length);
@@ -42,7 +52,10 @@ export class GenerateDraftQuestionsUseCase {
     private readonly createDraftQuestion: CreateDraftQuestionUseCase,
   ) {}
 
-  async execute(command: GenerateDraftQuestionsCommand): Promise<Result<GenerateDraftQuestionsOutput, DomainError>> {
+  async execute(
+    command: GenerateDraftQuestionsCommand,
+    listener: GenerationListener = {},
+  ): Promise<Result<GenerateDraftQuestionsOutput, DomainError>> {
     let mentorId: EntityId;
     try {
       OrganizationId.create(command.organizationId);
@@ -87,7 +100,7 @@ export class GenerateDraftQuestionsUseCase {
       index += 1;
     }
 
-    return ok({ drafts, rejected });
+    return ok({ drafts, rejected, usage: undefined as never });
   }
 
   /** Valida o formato (schema) e a regra do domínio de um item gerado e, se válido, salva o rascunho. */
