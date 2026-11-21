@@ -13,6 +13,8 @@ export interface AiUsageRemaining {
  */
 export interface AiUsageLimiter {
   tryConsume(mentorId: EntityId): Promise<Result<void, AiUsageLimitExceededError>>;
+  /** Devolve uma unidade cobrada por `tryConsume` (mentor e global). Nunca deixa o contador negativo. */
+  refund(mentorId: EntityId): Promise<void>;
   /** Gerações que ainda restam hoje (nunca negativo). */
   remaining(mentorId: EntityId): Promise<AiUsageRemaining>;
 }

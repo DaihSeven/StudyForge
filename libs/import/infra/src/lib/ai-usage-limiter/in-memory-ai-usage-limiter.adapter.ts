@@ -55,6 +55,11 @@ export class InMemoryAiUsageLimiterAdapter implements AiUsageLimiter {
     return ok(undefined);
   }
 
+  async refund(mentorId: EntityId): Promise<void> {
+    void mentorId;
+    throw new Error('InMemoryAiUsageLimiterAdapter.refund ainda não implementado.');
+  }
+
   async remaining(mentorId: EntityId): Promise<AiUsageRemaining> {
     this.resetIfNewDay();
     const mentorCount = this.perMentorCount.get(mentorId.value) ?? 0;

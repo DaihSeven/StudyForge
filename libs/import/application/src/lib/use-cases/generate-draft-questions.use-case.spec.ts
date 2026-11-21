@@ -43,12 +43,17 @@ class FakeGenerator implements QuestionDraftGenerator {
 
 class FakeLimiter implements AiUsageLimiter {
   readonly consumed: string[] = [];
+  readonly refunded: string[] = [];
 
   constructor(private readonly verdict: Result<void, AiUsageLimitExceededError> = ok(undefined)) {}
 
   async tryConsume(mentorId: EntityId): Promise<Result<void, AiUsageLimitExceededError>> {
     this.consumed.push(mentorId.value);
     return this.verdict;
+  }
+
+  async refund(mentorId: EntityId): Promise<void> {
+    this.refunded.push(mentorId.value);
   }
 
   async remaining(): Promise<AiUsageRemaining> {
