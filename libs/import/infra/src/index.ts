@@ -4,3 +4,4 @@ export * from './lib/id-generator/id-generator.module';
 export * from './lib/draft-question/prisma-draft-question.repository';
 export * from './lib/draft-question/draft-question.module';
 export * from './lib/ai-usage-limiter/in-memory-ai-usage-limiter.adapter';
+export * from './lib/question-draft-generator/mock-question-draft-generator.adapter';
