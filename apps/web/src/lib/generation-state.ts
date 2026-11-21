@@ -26,6 +26,20 @@ export const initialGenerationState: GenerationState = {
   error: null,
 };
 
-export function generationReducer(state: GenerationState, _action: GenerationAction): GenerationState {
-  throw new Error('generationReducer ainda não implementado.');
+export function generationReducer(state: GenerationState, action: GenerationAction): GenerationState {
+  if (action.type === 'start') {
+    return { ...initialGenerationState, status: 'streaming', requested: action.requested };
+  }
+
+  const { event } = action;
+  switch (event.event) {
+    case 'draft':
+      return { ...state, drafts: [...state.drafts, event.data] };
+    case 'rejected':
+      return { ...state, rejected: [...state.rejected, event.data] };
+    case 'done':
+      return { ...state, status: 'done', usage: event.data.usage, notice: event.data.notice ?? null };
+    case 'error':
+      return { ...state, status: 'error', error: event.data };
+  }
 }
