@@ -37,8 +37,37 @@ Tests:       14 passed, 14 total
 
 Nenhum além de remover a mensagem antiga de rede (que dizia não ser possível confirmar se a tentativa contou).
 
-## Pergunta em aberto
+## Ciclo 2 — separar "API indisponível" de "conexão caiu durante a geração"
 
-A mensagem antiga de falha de rede avisava "não foi possível confirmar se a tentativa contou no limite diário". A nova,
-pedida para o caso "API indisponível", não diz isso. Se a conexão cair depois de a API já ter debitado a cota, o mentor
-não é avisado. Vale decidir se a mensagem de rede deve manter esse aviso.
+A mensagem única do ciclo 1 perdia o aviso de cota. Agora há dois casos:
+- (a) falha **antes de qualquer evento** (proxy sem alcançar a API, ECONNREFUSED, 5xx com corpo de texto, stream que falha ou termina vazio, resposta 200 sem corpo): `API_UNAVAILABLE`, "API indisponível. Tente de novo em instantes.", sem falar de cota;
+- (b) conexão cortada **depois de ao menos um evento** e sem `done`/`error`: `STREAM_INTERRUPTED`, "A conexão caiu durante a geração. Não foi possível confirmar se a tentativa contou no limite diário."
+
+Helper de teste: `streamResponse(chunks, failure?)` agora aceita um erro lançado depois do último pedaço (conexão cortada no meio).
+
+### RED
+
+```
+$ npx nx test web --skip-nx-cache --output-style=static -- generate-drafts-client   # RED
+  ● streamGeneration › says the API is unavailable when a 200 response has no body
+  ● streamGeneration › says the API is unavailable when the stream ends empty, before any event
+  ● streamGeneration › says the API is unavailable when the stream fails before any event
+  ● streamGeneration › says the connection dropped when the read fails after an event
+  ● streamGeneration › says the connection dropped when the stream ends after an event without done or error
+Test Suites: 1 failed, 1 total
+Tests:       5 failed, 12 passed, 17 total
+```
+
+### GREEN
+
+O cliente conta os eventos recebidos (`received`); ao detectar a interrupção, `received === 0` vira `API_UNAVAILABLE` e `received > 0` vira `STREAM_INTERRUPTED` com a mensagem nova. A mensagem antiga (`INTERRUPTED_MESSAGE`) foi removida.
+
+```
+$ npx nx test web --skip-nx-cache --output-style=static -- generate-drafts-client   # GREEN
+Test Suites: 1 passed, 1 total
+Tests:       17 passed, 17 total
+```
+
+### REFACTOR
+
+Nenhum além do helper local `interrupted()` que concentra a decisão.
