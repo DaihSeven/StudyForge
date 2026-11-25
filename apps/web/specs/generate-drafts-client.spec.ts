@@ -74,21 +74,35 @@ describe('streamGeneration', () => {
     expect(events).toEqual([{ event: 'error', data: body }]);
   });
 
-  it('uses a generic message when the HTTP error body is not the expected JSON', async () => {
+  it('says the API is unavailable when a 5xx has a plain-text body (the Next proxy could not reach the API)', async () => {
     const { events } = await run(errorResponse(500, 'Internal Server Error'));
 
-    expect(events).toHaveLength(1);
-    expect(events[0].event).toBe('error');
-    expect(events[0].data).toMatchObject({ code: 'HTTP_500' });
-    expect((events[0].data as { message: string }).message).toContain('500');
+    expect(events).toEqual([
+      { event: 'error', data: { code: 'API_UNAVAILABLE', message: 'API indisponível. Tente de novo em instantes.' } },
+    ]);
   });
 
-  it('reports a network failure without claiming whether the attempt counted', async () => {
+  it('says the API is unavailable on a network failure', async () => {
     const { events } = await run(new TypeError('Failed to fetch'));
 
+    expect(events).toEqual([
+      { event: 'error', data: { code: 'API_UNAVAILABLE', message: 'API indisponível. Tente de novo em instantes.' } },
+    ]);
+  });
+
+  it('keeps a generic HTTP message for a non-5xx error whose body is not the expected JSON', async () => {
+    const { events } = await run(errorResponse(404, 'Not Found'));
+
     expect(events).toHaveLength(1);
-    expect(events[0].data).toMatchObject({ code: 'NETWORK_ERROR' });
-    expect((events[0].data as { message: string }).message).toContain('não foi possível confirmar se a tentativa contou');
+    expect(events[0].data).toMatchObject({ code: 'HTTP_404' });
+    expect((events[0].data as { message: string }).message).toContain('404');
+  });
+
+  it('keeps the server message for a 502 with the API JSON body', async () => {
+    const body = { code: 'AI_PROVIDER_ERROR', message: 'O provedor de IA falhou. Esta tentativa não contou no seu limite diário.' };
+    const { events } = await run(errorResponse(502, body));
+
+    expect(events).toEqual([{ event: 'error', data: body }]);
   });
 
   it('reports an interruption when the stream ends without done or error', async () => {

@@ -39,10 +39,7 @@ export async function streamGeneration(options: StreamGenerationOptions): Promis
     if (isAbort(error, signal)) {
       return;
     }
-    fail(
-      'NETWORK_ERROR',
-      'Não foi possível conectar ao servidor. Verifique a conexão e tente de novo; não foi possível confirmar se a tentativa contou no limite diário.',
-    );
+    fail('API_UNAVAILABLE', API_UNAVAILABLE_MESSAGE);
     return;
   }
 
@@ -50,6 +47,9 @@ export async function streamGeneration(options: StreamGenerationOptions): Promis
     const parsed = GenerationErrorSchema.safeParse(await readJson(response));
     if (parsed.success) {
       onEvent({ event: 'error', data: parsed.data });
+    } else if (response.status >= 500) {
+      // 5xx sem o JSON da API: quem respondeu foi o proxy do Next (a API não foi alcançada).
+      fail('API_UNAVAILABLE', API_UNAVAILABLE_MESSAGE);
     } else {
       fail(`HTTP_${response.status}`, `O servidor respondeu com erro (HTTP ${response.status}). Tente de novo mais tarde.`);
     }
@@ -81,6 +81,8 @@ export async function streamGeneration(options: StreamGenerationOptions): Promis
     fail('STREAM_INTERRUPTED', INTERRUPTED_MESSAGE);
   }
 }
+
+const API_UNAVAILABLE_MESSAGE = 'API indisponível. Tente de novo em instantes.';
 
 const INTERRUPTED_MESSAGE =
   'A conexão foi interrompida antes do fim da geração. Os rascunhos já recebidos continuam na tela; não foi possível confirmar se a tentativa contou no limite diário.';
