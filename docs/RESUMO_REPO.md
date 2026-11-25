@@ -82,7 +82,7 @@ npx nx run-many -t test --coverage --coverageReporters=text-summary --skip-nx-ca
 
 ## 6. Cobertura atual por projeto
 
-Saída real de `npx nx run-many -t test --coverage --coverageReporters=text-summary --skip-nx-cache` na `main` em 2026-11-25 (commit `ef5403e`; 11 projetos com testes, todos com sucesso; **359 testes no total**: shared-domain 26, shared-contracts 24, shared-prisma 5, import-domain 44, identity-domain 23, import-application 34, identity-infra 6, import-infra 112, api 26, web 59). Os projetos têm limite mínimo de 80% no `jest.config` (`coverageThreshold`).
+Saída real de `npx nx run-many -t test --coverage --coverageReporters=text-summary --skip-nx-cache` na `main` em 2026-11-25 (commit `ef5403e`; 11 projetos com testes, todos com sucesso; **362 testes no total**: shared-domain 26, shared-contracts 24, shared-prisma 5, import-domain 44, identity-domain 23, import-application 34, identity-infra 6, import-infra 112, api 26, web 62). Depois dessa medição, o PR #23 acrescentou 3 testes ao `web` (59 para 62; contagem confirmada com `nx test web`, mas a cobertura do `web` abaixo é da medição anterior). Os projetos têm limite mínimo de 80% no `jest.config` (`coverageThreshold`).
 
 ```
 == shared-domain
@@ -149,7 +149,7 @@ Statements  : 96.66% ( 174/180 )
 Branches    : 91.11% ( 82/90 )
 Functions   : 100% ( 35/35 )
 Lines       : 96.96% ( 160/165 )
-Tests:       59 passed, 59 total
+Tests:       62 passed, 62 total
 ```
 
 Observações:

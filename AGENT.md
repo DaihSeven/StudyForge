@@ -33,7 +33,7 @@ restante de application/infra do `identity` ainda por fazer). Existe hoje:
 - Prisma 7.10 com schema: models User, DraftQuestion (com alternativas compostas) e Alternative
 - Migrações criadas: 20261001231755_init, 20261109190000_create_users
 - ESLint: regras scope (shared, import, identity, api, web) e type (domain, application, infra, contracts)
-- 359 testes unitários, todos sem banco (shared-domain 26, shared-contracts 24, shared-prisma 5, import-domain 44, identity-domain 23, import-application 34, identity-infra 6, import-infra 112, api 26, web 59), medidos em 2026-11-25; `identity-infra` com 90,47% de statements e 83,33% de branches, `web` com 96,66% e 91,11%
+- 362 testes unitários, todos sem banco (shared-domain 26, shared-contracts 24, shared-prisma 5, import-domain 44, identity-domain 23, import-application 34, identity-infra 6, import-infra 112, api 26, web 62), medidos em 2026-11-25; `identity-infra` com 90,47% de statements e 83,33% de branches, `web` com 96,66% e 91,11%
 - CI (GitHub Actions) com o job **Integration (Postgres)**: service container `postgres:16` com credenciais descartáveis, `prisma migrate deploy` e `nx run-many -t test-integration`. O job não é obrigatório no ruleset `proteger-main`. O alvo `test-integration` tem padrões em `targetDefaults` do `nx.json` e hoje existe em `shared-prisma` (fumaça `SELECT 1`) e `import-infra`
 - lint, test, build funcionando para todos os projetos
 - skill `bounded-context-scaffolder` criada (gera novo bounded context com estrutura + proteções)
