@@ -64,7 +64,7 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
       const message = await this.complete(messages, turn === 0);
 
       if (!message.tool_calls?.length) {
-        yield* this.parseFinalAnswer(message.content);
+        yield* this.parseFinalAnswer(message.content, tool.validatedQuestions());
         return;
       }
 
@@ -165,9 +165,17 @@ export class GroqQuestionDraftGeneratorAdapter implements QuestionDraftGenerator
     return message;
   }
 
-  /** Itens do JSON final; resposta malformada vira um item que falha o schema (será `rejected`). */
-  private *parseFinalAnswer(content: string | null | undefined): Iterable<GeneratedDraftQuestion> {
+  /** Itens do JSON final; se ele não faz parse, usa as questões já validadas pela tool; sem nenhuma, vira um item que falha o schema (será `rejected`). */
+  private *parseFinalAnswer(
+    content: string | null | undefined,
+    validated: unknown[],
+  ): Iterable<GeneratedDraftQuestion> {
     const questions = extractQuestions(content);
+    if (questions === null && validated.length > 0) {
+      // O modelo às vezes quebra o JSON ao reescrevê-lo; as questões já passaram por `validar_questao`.
+      yield* validated as GeneratedDraftQuestion[];
+      return;
+    }
     if (questions === null) {
       yield {
         malformed: 'A resposta do modelo não é um JSON com a lista "questions".',

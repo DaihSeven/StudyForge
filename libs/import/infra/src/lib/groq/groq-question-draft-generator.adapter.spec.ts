@@ -164,6 +164,38 @@ describe('GroqQuestionDraftGeneratorAdapter', () => {
       expect(GeneratedDraftQuestionSchema.safeParse(items[0]).success).toBe(false);
     });
 
+    // Fixture imita uma resposta real do gpt-oss-120b (sem segredo): 3 tool calls válidas e depois um JSON
+    // final que o modelo reescreveu à mão e quebrou (`"organ":?` e escape duplo), com finish_reason "stop".
+    const BROKEN_FINAL_JSON =
+      '{"questions":[{"type":"SINGLE_CHOICE","statement":"O que a fotossíntese converte?","alternatives":' +
+      '[{"letter":"A","text":"Cloroplastos","isCorrect":true},{"letter":"D","text":"Lis\\\\u00e9mao","isCorrect":false},' +
+      '{"letter":"C","organ":?}]}\n';
+
+    it('falls back to the questions already validated by the tool when the final JSON cannot be parsed', async () => {
+      const { adapter } = build([
+        callTools(validate('call_1', single('Q1'), 1)),
+        callTools(validate('call_2', single('Q2'), 2)),
+        callTools(validate('call_3', single('Q3'), 3)),
+        finalAnswer(BROKEN_FINAL_JSON),
+      ]);
+
+      const items = await collect(adapter.generate(input('texto', 3)));
+
+      expect(items.map((item) => item.statement)).toEqual(['Q1', 'Q2', 'Q3']);
+    });
+
+    it('keeps the latest valid version of a corrected question and ignores invalid attempts in the fallback', async () => {
+      const { adapter } = build([
+        callTools(validate('call_1', twoCorrect(), 1)),
+        callTools(validate('call_2', single('Q1 corrigida'), 1)),
+        finalAnswer(BROKEN_FINAL_JSON),
+      ]);
+
+      const items = await collect(adapter.generate(input()));
+
+      expect(items.map((item) => item.statement)).toEqual(['Q1 corrigida']);
+    });
+
     it.each([['{"questions": "nope"}'], ['{"outra": 1}'], ['[1,2]'], ['']])(
       'turns an answer without a questions array (%j) into one item that fails the schema',
       async (content) => {
