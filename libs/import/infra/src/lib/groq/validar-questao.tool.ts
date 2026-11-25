@@ -61,7 +61,13 @@ const LIMIT_MESSAGE = ' Limite de correções desta questão atingido: não tent
  */
 export class ValidarQuestaoTool {
   private readonly failures = new Map<number, number>();
+  private readonly validated = new Map<number, unknown>();
   private calls = 0;
+
+  /** Última versão válida de cada questão, por número. Serve de reserva se o JSON final do modelo vier quebrado. */
+  validatedQuestions(): unknown[] {
+    return [...this.validated.entries()].sort(([a], [b]) => a - b).map(([, question]) => question);
+  }
 
   execute(rawArguments: string): ToolResult {
     this.calls += 1;
@@ -83,6 +89,7 @@ export class ValidarQuestaoTool {
 
     const failure = this.check(record['question']);
     if (!failure) {
+      this.validated.set(questionNumber, record['question']);
       return { valid: true };
     }
 
