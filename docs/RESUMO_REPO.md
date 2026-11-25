@@ -1,6 +1,6 @@
 # Resumo do repositório
 
-Fotografia do estado do StudyForge em **2026-11-21**, na `main` (commit `3937790`, merge do PR #16). Cobre os PRs #11 a #17. Documento de apoio: a fonte de verdade sobre produto é o `README.md` e sobre como trabalhar no código é o `CLAUDE.md`. Não contém segredos, connection strings nem valores do `.env`.
+Fotografia do estado do StudyForge em **2026-11-25**, na `main` (commit `ef5403e`, merge do PR #22). Cobre os PRs #11 a #22 (a Semana 11 inteira: ADR-010, camada de IA e tela do mentor). Documento de apoio: a fonte de verdade sobre produto é o `README.md` e sobre como trabalhar no código é o `CLAUDE.md`. Não contém segredos, connection strings nem valores do `.env`.
 
 ## 1. Projeto
 
@@ -39,7 +39,7 @@ docs/
   specs/                  S5 e Marco 3.1
   tasks/, rpi/, evidencias/
 .github/workflows/ci.yml
-README.md  CLAUDE.md  AGENT.md  DELIVERABLES.md  LOG-RED-GREEN-REFACTOR-{1,2,3,4}.md
+README.md  CLAUDE.md  AGENT.md  DELIVERABLES.md  LOG-RED-GREEN-REFACTOR-{1..9}.md
 ```
 
 Projetos Nx (11): `api`, `web`, `shared-domain`, `shared-contracts`, `shared-prisma`, `import-domain`, `import-application`, `import-infra`, `identity-domain`, `identity-application`, `identity-infra`.
@@ -82,78 +82,80 @@ npx nx run-many -t test --coverage --coverageReporters=text-summary --skip-nx-ca
 
 ## 6. Cobertura atual por projeto
 
-Saída real de `npx nx run-many -t test --coverage --coverageReporters=text-summary --skip-nx-cache` na `main` (12 tarefas, todas com sucesso; 124 testes no total). O bloco abaixo é da fotografia de 2026-11-17 (122 testes); só `identity-infra` mudou desde então (PR #15), e dele estão atualizados apenas os dois percentuais abaixo, os únicos recontados. Os projetos têm limite mínimo de 80% no `jest.config` (`coverageThreshold`).
+Saída real de `npx nx run-many -t test --coverage --coverageReporters=text-summary --skip-nx-cache` na `main` em 2026-11-25 (commit `ef5403e`; 11 projetos com testes, todos com sucesso; **359 testes no total**: shared-domain 26, shared-contracts 24, shared-prisma 5, import-domain 44, identity-domain 23, import-application 34, identity-infra 6, import-infra 112, api 26, web 59). Os projetos têm limite mínimo de 80% no `jest.config` (`coverageThreshold`).
 
 ```
-== shared-contracts
-Statements   : 100% ( 3/3 )
-Branches     : 100% ( 0/0 )
-Functions    : 100% ( 0/0 )
-Lines        : 100% ( 3/3 )
-Tests:       4 passed, 4 total
 == shared-domain
-Statements   : 93.22% ( 55/59 )
-Branches     : 100% ( 12/12 )
-Functions    : 96.29% ( 26/27 )
-Lines        : 92.72% ( 51/55 )
+Statements  : 93.22% ( 55/59 )
+Branches    : 100% ( 12/12 )
+Functions   : 96.29% ( 26/27 )
+Lines       : 92.72% ( 51/55 )
 Tests:       26 passed, 26 total
+== shared-contracts
+Statements  : 100% ( 38/38 )
+Branches    : 92.3% ( 12/13 )
+Functions   : 100% ( 8/8 )
+Lines       : 100% ( 36/36 )
+Tests:       24 passed, 24 total
 == shared-prisma
-Statements   : 100% ( 12/12 )
-Branches     : 100% ( 2/2 )
-Functions    : 100% ( 3/3 )
-Lines        : 100% ( 10/10 )
+Statements  : 100% ( 12/12 )
+Branches    : 100% ( 2/2 )
+Functions   : 100% ( 3/3 )
+Lines       : 100% ( 10/10 )
 Tests:       5 passed, 5 total
 == import-domain
-Statements   : 100% ( 35/35 )
-Branches     : 100% ( 22/22 )
-Functions    : 100% ( 8/8 )
-Lines        : 100% ( 31/31 )
-Tests:       31 passed, 31 total
-== import-application
-Statements   : 100% ( 21/21 )
-Branches     : 100% ( 2/2 )
-Functions    : 100% ( 3/3 )
-Lines        : 100% ( 19/19 )
-Tests:       11 passed, 11 total
-== identity-application
-No tests found, exiting with code 0
-Statements   : Unknown% ( 0/0 )
-Branches     : Unknown% ( 0/0 )
-Functions    : Unknown% ( 0/0 )
-Lines        : Unknown% ( 0/0 )
+Statements  : 100% ( 53/53 )
+Branches    : 100% ( 26/26 )
+Functions   : 100% ( 13/13 )
+Lines       : 100% ( 49/49 )
+Tests:       44 passed, 44 total
 == identity-domain
-Statements   : 100% ( 49/49 )
-Branches     : 96.42% ( 27/28 )
-Functions    : 100% ( 10/10 )
-Lines        : 100% ( 49/49 )
+Statements  : 100% ( 49/49 )
+Branches    : 96.42% ( 27/28 )
+Functions   : 100% ( 10/10 )
+Lines       : 100% ( 49/49 )
 Tests:       23 passed, 23 total
-== web
-Statements   : 100% ( 8/8 )
-Branches     : 100% ( 0/0 )
-Functions    : 100% ( 3/3 )
-Lines        : 100% ( 7/7 )
-Tests:       4 passed, 4 total
+== identity-application
+Statements  : Unknown% ( 0/0 )
+Branches    : Unknown% ( 0/0 )
+Functions   : Unknown% ( 0/0 )
+Lines       : Unknown% ( 0/0 )
+== import-application
+Statements  : 98.09% ( 103/105 )
+Branches    : 97.82% ( 45/46 )
+Functions   : 100% ( 12/12 )
+Lines       : 97.91% ( 94/96 )
+Tests:       34 passed, 34 total
+== identity-infra
+Statements  : 90.47% ( 19/21 )
+Branches    : 83.33% ( 5/6 )
+Functions   : 100% ( 7/7 )
+Lines       : 89.47% ( 17/19 )
+Tests:       6 passed, 6 total
 == import-infra
-Statements   : 100% ( 14/14 )
-Branches     : 100% ( 0/0 )
-Functions    : 100% ( 4/4 )
-Lines        : 100% ( 10/10 )
-Tests:       5 passed, 5 total
+Statements  : 98.32% ( 235/239 )
+Branches    : 91.89% ( 170/185 )
+Functions   : 94% ( 47/50 )
+Lines       : 99.55% ( 222/223 )
+Tests:       112 passed, 112 total
 == api
-Statements   : 100% ( 36/36 )
-Branches     : 100% ( 4/4 )
-Functions    : 100% ( 9/9 )
-Lines        : 100% ( 30/30 )
-Tests:       9 passed, 9 total
-== identity-infra   (atualizado após o PR #15; só os percentuais foram recontados)
-Statements   : 90.47%
-Branches     : 83.33%
+Statements  : 100% ( 84/84 )
+Branches    : 94.44% ( 17/18 )
+Functions   : 100% ( 17/17 )
+Lines       : 100% ( 76/76 )
+Tests:       26 passed, 26 total
+== web
+Statements  : 96.66% ( 174/180 )
+Branches    : 91.11% ( 82/90 )
+Functions   : 100% ( 35/35 )
+Lines       : 96.96% ( 160/165 )
+Tests:       59 passed, 59 total
 ```
 
 Observações:
 
 - `identity-application` não tem testes (só um port e um erro), por isso a cobertura aparece como `Unknown%`.
-- `identity-infra` (90,47% de statements e 83,33% de branches) e `shared-domain` (93,22%) são os únicos abaixo de 100% em statements, e ambos acima do limite de 80%.
+- Abaixo de 100% em statements: `identity-infra` (90,47%), `shared-domain` (93,22%), `web` (96,66%), `import-application` (98,09%) e `import-infra` (98,32%); todos acima do limite de 80%.
 - A garantia "nada é gravado" do cenário 3 da S5 (email duplicado) depende do PostgreSQL e não é provada por teste sem banco (ver `LOG-RED-GREEN-REFACTOR-3.md`).
 
 ## 7. CI e proteção da `main`
@@ -190,6 +192,7 @@ Estado: o run do PR #11 terminou com os 7 checks em sucesso. O `npm audit` de pr
 | Etapa 1 — Fundação documental | concluída |
 | Etapa 2 — Marcos 2.1 a 2.6 (monorepo, domínio, application, infra, API REST, contexto `identity` scaffoldado) | concluída |
 | Etapa 3 — Marco 3.1 (fechar `identity`) | **parcial**: `UserRepository` com `findById` (T1, PR #15), `findByEmail` e `save`, `PrismaUserRepository` (ainda não registrado no `IdentityInfraModule`), model e migration de `User`. Spec pronta; faltam T2 a T17. O CI já tem PostgreSQL para os cenários que precisam de banco (C09, C11, C12, C17). |
+| Semana 11 (camada de IA, ADR-010) | **concluída** (PRs #16 a #22): geração de rascunhos com `mock`/`groq`, SSE e tela do mentor. Ver README, "Semana 11: onde está cada requisito" |
 | Marco 3.2 | autenticação (Google OAuth) e fluxo de convite por link: planejado |
 | Marco 3.3 | importação por modelo estruturado (JSON e Markdown): planejado |
 | Marco 3.4 | contexto `quiz` (scaffold e domain): planejado |
@@ -217,15 +220,17 @@ Estado: o run do PR #11 terminou com os 7 checks em sucesso. O `npm audit` de pr
 - ADR-007: organização pessoal automática, visibilidade `PRIVATE`/`UNLISTED`/`PUBLIC` e moderação por admin da plataforma.
 - ADR-008: banco de questões por certificação e simulados de 25 ou 65 questões por sorteio estratificado.
 - ADR-009 (`adr-009-persistencia-identity-marco-3-1.md`, **Proposed**): persistência do `identity` no Marco 3.1. Models `Organization`, `Membership` e `Invitation`, índices únicos (`Membership` por User e Organization, `Invitation.tokenHash`), `onDelete: Restrict` em todas as FKs, só o SHA-256 do token no banco, `EXPIRED` calculado, migration única do grupo e integração de C09, C11, C12 e C17 em `identity-infra` com `--parallel=1`. Traz 10 decisões em aberto.
-- ADR-010 (`adr-010-ia-opcional-na-geracao-de-rascunhos.md`, **Accepted** em 2026-11-21, PR #16): IA gratuita e opcional na geração de rascunhos, ajustando parcialmente o ADR-004. Port `QuestionDraftGenerator` com adaptadores `mock` (padrão), `groq` e `google`, chave só no servidor, ação só para `MENTOR` com provedor configurado e limite diário por mentor e global. O fluxo manual continua sendo o caminho principal. Traz 6 decisões em aberto. A implementação só começa em PR próprio.
+- ADR-010 (`adr-010-ia-opcional-na-geracao-de-rascunhos.md`, **Accepted** em 2026-11-21, PR #16): IA gratuita e opcional na geração de rascunhos, ajustando parcialmente o ADR-004. Port `QuestionDraftGenerator` com adaptadores `mock` (padrão), `groq` e `google`, chave só no servidor, ação só para `MENTOR` com provedor configurado e limite diário por mentor e global. O fluxo manual continua sendo o caminho principal. Implementado na Semana 11 (PRs #16 a #22): adaptadores `mock` e `groq` (o `google` ficou no backlog), limite de uso em memória, endpoint SSE `POST /api/draft-questions/generate` e a tela `/rascunhos/novo`. O fechamento da semana registrou os achados nos itens 14 a 18 do ADR (JSON final quebrado pelo modelo e fallback do PR #22, `--webpack`, `usage` = gerações restantes, teto global ainda provisório, qualidade com lista de tópicos).
 
 **Tarefas** (`docs/tasks/`)
 
 - `marco-3-1-tarefas.md`: 18 tarefas ordenadas (T0 a T17), cada uma com objetivo, cenários C01–C29, arquivos esperados e critério de pronto. Marca as que precisam de banco (T16 e T17, só no CI). Substitui o checklist antigo `s6-identity-implementation-tasks.md`, que agora traz a marca "Substituído" no topo.
 
-Outros documentos: `DELIVERABLES.md` (histórico por semana), `LOG-RED-GREEN-REFACTOR-1/2/3/4.md`, `TESTE-QUE-NAO-PROVA-NADA.md`, `docs/escopo-projeto-final.md`, `docs/rpi/`, `docs/evidencias/`.
+Outros documentos: `DELIVERABLES.md` (histórico por semana), `LOG-RED-GREEN-REFACTOR-1` a `9` (`.md`), `TESTE-QUE-NAO-PROVA-NADA.md`, `docs/escopo-projeto-final.md`, `docs/rpi/`, `docs/evidencias/`.
 
 ## 10. Decisões em aberto mais relevantes
+
+Semana 11 (camada de IA; detalhes no ADR-010, itens 14 a 18): Next com `--webpack` até as libs deixarem de declarar `"type": "commonjs"` com código ESM; tornar a tool `validar_questao` a fonte de verdade das questões; reforçar o system prompt para perguntas conceituais; medir tokens por geração e então confirmar o teto global de 40; `usage` do evento `done` são gerações **restantes**.
 
 Marco 3.1 (testes de integração em `identity-infra`):
 
@@ -253,6 +258,8 @@ A lista completa está no fim de cada ADR.
 
 ## 11. Armadilhas conhecidas
 
+- **`apps/web/AGENTS.md` é gerado pelo Next 16** ao rodar `next dev` e está no `.gitignore`; não commitar.
+- **Web com `--webpack`:** `next dev` e `next build` usam `--webpack` porque o Turbopack recusa as libs com `"type": "commonjs"` e código ESM (ADR-010, item 14).
 - **Override do `effect` no `package.json`** (`"effect": "^3.22.1"`, PR #17): corrige uma vulnerabilidade na dependência transitiva trazida pelo Prisma 7.10. Remover o override quando o Prisma 7.x trouxer o `effect` corrigido.
 - **`apps/web/next-env.d.ts` é reescrito pelo Next.** O arquivo é versionado, mas `next dev`/`next build` o regravam, deixando o working tree sujo sem mudança real. Não commitar: descartar com `git restore apps/web/next-env.d.ts`.
 - **`claude` fora do PATH depois de reconstruir o Codespace.** Se o comando não for encontrado, o binário fica em `/usr/local/share/npm-global/bin`; adicione ao PATH com `export PATH="$PATH:/usr/local/share/npm-global/bin"` (e ao `~/.bashrc` para persistir).
