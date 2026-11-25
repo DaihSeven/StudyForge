@@ -30,9 +30,8 @@ export interface GenerateDraftsScreenProps {
 const formatNumber = (value: number) => value.toLocaleString('pt-BR');
 const plural = (count: number, one: string, many: string) => (count === 1 ? one : many);
 
-function typeOptionLabel(type: string, alternatives: number, correct: number): string {
-  const last = String.fromCharCode(64 + alternatives);
-  return `${TYPE_LABELS[type] ?? type}: ${alternatives} alternativas (A–${last}), ${correct} ${plural(correct, 'correta', 'corretas')}`;
+function typeOptionLabel(type: string, alternatives: number): string {
+  return `${TYPE_LABELS[type] ?? type} (${alternatives} ${plural(alternatives, 'alternativa', 'alternativas')})`;
 }
 
 export function GenerateDraftsScreen({
@@ -147,7 +146,7 @@ export function GenerateDraftsScreen({
             <select id={`${ids}-type`} className={styles.select} value={typeValue} onChange={(e) => setTypeValue(e.target.value)}>
               {QUESTION_TYPE_CHOICES.map((choice) => (
                 <option key={choice.type} value={choice.type}>
-                  {typeOptionLabel(choice.type, choice.alternativesPerQuestion, choice.correctCount)}
+                  {typeOptionLabel(choice.type, choice.alternativesPerQuestion)}
                 </option>
               ))}
             </select>
