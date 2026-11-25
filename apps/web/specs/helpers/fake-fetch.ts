@@ -14,12 +14,15 @@ export interface FakeFetch {
   readonly calls: FakeFetchCall[];
 }
 
-function readerFor(chunks: readonly string[]) {
+function readerFor(chunks: readonly string[], failure?: Error) {
   const encoder = new NodeTextEncoder();
   let position = 0;
   return {
     async read(): Promise<{ done: boolean; value?: Uint8Array }> {
       if (position >= chunks.length) {
+        if (failure) {
+          throw failure;
+        }
         return { done: true };
       }
       const value = encoder.encode(chunks[position]);
@@ -29,9 +32,12 @@ function readerFor(chunks: readonly string[]) {
   };
 }
 
-/** Resposta 200 cujo corpo entrega os pedaços de texto um a um (como um stream SSE). */
-export function streamResponse(chunks: readonly string[]) {
-  return { ok: true, status: 200, body: { getReader: () => readerFor(chunks) } };
+/**
+ * Resposta 200 cujo corpo entrega os pedaços de texto um a um (como um stream SSE).
+ * Com `failure`, a leitura lança esse erro depois do último pedaço (conexão cortada no meio).
+ */
+export function streamResponse(chunks: readonly string[], failure?: Error) {
+  return { ok: true, status: 200, body: { getReader: () => readerFor(chunks, failure) } };
 }
 
 /** Resposta de erro HTTP com corpo JSON (ou texto, se `body` for string). */

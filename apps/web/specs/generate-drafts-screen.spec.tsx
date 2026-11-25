@@ -40,14 +40,13 @@ describe('GenerateDraftsScreen — formulário', () => {
     expect(screen.getByRole('heading', { name: '2. Revisão' })).toBeTruthy();
   });
 
-  it('offers "Tipo de questão" with the real rules: 4 alternatives/1 correct and 5 alternatives/2 correct', () => {
+  it('offers "Tipo de questão" with the real alternative counts and "Escolha única" as the default', () => {
     setup();
 
     const select = screen.getByLabelText('Tipo de questão') as HTMLSelectElement;
     const options = within(select).getAllByRole('option').map((o) => o.textContent ?? '');
-    expect(options).toHaveLength(2);
-    expect(options[0]).toMatch(/4 alternativas \(A–D\), 1 correta$/);
-    expect(options[1]).toMatch(/5 alternativas \(A–E\), 2 corretas$/);
+    expect(options).toEqual(['Escolha única (4 alternativas)', 'Múltipla escolha (5 alternativas)']);
+    expect(select.value).toBe('SINGLE_CHOICE');
     expect(screen.queryByText('Alternativas por questão')).toBeNull();
   });
 

@@ -42,3 +42,6 @@ out
 
 # TypeScript incremental
 *.tsbuildinfo
+
+# Gerado pelo Next 16 ao rodar `next dev`
+apps/web/AGENTS.md

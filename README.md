@@ -233,24 +233,36 @@ Nenhuma no momento.
 
 ## Como ver a tela do mentor
 
-Tela `/rascunhos/novo` (Semana 11, PR 3): o mentor cola o texto, a API gera rascunhos e eles chegam um a um por SSE. Com `AI_PROVIDER=mock` não há rede nem chave. A API grava cada `DraftQuestion` no PostgreSQL (repositório Prisma), então ela **precisa de um `DATABASE_URL` com as migrations aplicadas**, mesmo com o mock. Os ids abaixo são de teste e **temporários até o Marco 3.2** (autenticação).
+Tela `/rascunhos/novo` (Semana 11, PR 3): o mentor cola o texto, a API gera rascunhos e eles chegam um a um por SSE. A raiz `/` redireciona para ela. A API grava cada `DraftQuestion` no PostgreSQL (repositório Prisma), então ela **precisa de um `DATABASE_URL` com as migrations aplicadas**, mesmo com `AI_PROVIDER=mock` (sem rede nem chave). Os ids abaixo são de teste e **temporários até o Marco 3.2** (autenticação).
 
-Terminal 1, API na porta 3333 (substitua o `DATABASE_URL` pelo do seu banco de desenvolvimento):
+**De onde vêm as variáveis.** No Codespace, `DATABASE_URL` e `GROQ_API_KEY` vêm dos **Codespaces Secrets**: o ambiente do terminal já as herda, e os processos filhos também. **Não crie `.env`, não copie o valor para arquivos e não exporte a string no terminal.** Fora do Codespace, use o mecanismo de segredos do seu ambiente (ver `.env.example`, sem valores reais). O web nunca recebe chave: só a API a lê.
+
+Terminal 1, API na porta 3333. `AI_PROVIDER` é `mock` (padrão, sem rede) ou `groq` (chamada real, gasta cota gratuita):
 
 ```bash
 npm ci
-export DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE_NAME?schema=public"
 npx prisma migrate deploy
-AI_PROVIDER=mock PORT=3333 npx nx serve api
+AI_PROVIDER=mock PORT=3333 npx nx serve api   # ou AI_PROVIDER=groq
 ```
 
-Terminal 2, web na porta 3000 (o Next repassa `/api/draft-questions/*` para a API em `http://localhost:3333`, sem CORS; mude com `API_PROXY_TARGET`):
+Terminal 2, web na porta 3000 (o Next repassa `/api/draft-questions/*` para a API em `http://localhost:3333`, sem CORS; mude com `API_PROXY_TARGET`). O `dev` do web roda com `--webpack`, ver [ADR-010](docs/adrs/adr-010-ia-opcional-na-geracao-de-rascunhos.md), item 14:
 
 ```bash
 NEXT_PUBLIC_DEMO_ORGANIZATION_ID=org-demo NEXT_PUBLIC_DEMO_MENTOR_ID=mentor-demo npx nx dev web
 ```
 
-No Codespace, abra a aba **Ports** (Portas), localize a **3000** ("Next.js (web)", já encaminhada pelo `devcontainer.json`) e abra o endereço dela no navegador, acrescentando `/rascunhos/novo`. Só a 3000 precisa ser aberta: o navegador conversa apenas com o web, e o web fala com a API por dentro do Codespace. As variáveis `NEXT_PUBLIC_*` são lidas quando o Next sobe: se mudar, reinicie o `nx dev web`. Não exponha a API com provedor real publicamente antes do Marco 3.2 ([ADR-010](docs/adrs/adr-010-ia-opcional-na-geracao-de-rascunhos.md), risco aceito).
+No Codespace, abra a aba **Ports** (Portas), localize a **3000** ("Next.js (web)", já encaminhada pelo `devcontainer.json`) e abra o endereço dela no navegador (a raiz já redireciona para `/rascunhos/novo`). Só a 3000 precisa ser aberta: o navegador conversa apenas com o web, e o web fala com a API por dentro do Codespace. **Mantenha as portas privadas.** As variáveis `NEXT_PUBLIC_*` são lidas quando o Next sobe: se mudar, reinicie o `nx dev web`. Se a tela mostrar "API indisponível", a API não está de pé na 3333. Não exponha a API com provedor real publicamente antes do Marco 3.2 ([ADR-010](docs/adrs/adr-010-ia-opcional-na-geracao-de-rascunhos.md), risco aceito).
+
+**Dica ao mentor:** cole **texto de estudo explicativo, não uma lista de tópicos**. Com lista de tópicos, o modelo tende a perguntar o que o texto "menciona"; com texto explicativo, gera perguntas conceituais (achado registrado no ADR-010, item 18).
+
+## Semana 11: onde está cada requisito
+
+| Requisito | Onde está | Como funciona |
+|---|---|---|
+| **System prompt** | `libs/import/infra/src/lib/groq/system-prompt.ts` (`buildSystemPrompt`, `buildUserMessage`) | Prompt de sistema montado para a quantidade e o tipo pedidos; o texto do mentor entra só como dado delimitado na mensagem do usuário, nunca no prompt de sistema. |
+| **Structured output (Zod)** | Schema: `libs/shared/contracts/src/lib/generated-draft-question.schema.ts`. Validação: `libs/import/application/src/lib/use-cases/generate-draft-questions.use-case.ts` | A Groq **não aceita `response_format` junto com `tools`**, então a requisição não envia `response_format` (`libs/import/infra/src/lib/groq/groq-question-draft-generator.adapter.ts`) e cada item da resposta é validado com Zod depois; itens inválidos vão para `rejected`. |
+| **Tool calling** | `libs/import/infra/src/lib/groq/validar-questao.tool.ts` e o laço em `groq-question-draft-generator.adapter.ts` | A tool `validar_questao` roda localmente (schema + regras do domínio) e devolve o erro ao modelo; **no máximo 2 rodadas de correção por questão** (`MAX_CORRECTION_ROUNDS`). Se o JSON final do modelo vier quebrado, o adaptador usa as questões já validadas pela tool (ADR-010, item 15). |
+| **Streaming** | API: `apps/api/src/modules/draft-question/generate-draft-questions.controller.ts`. Contrato dos eventos: `libs/shared/contracts/src/lib/generation-events.ts`. Cliente: `apps/web/src/lib/generate-drafts-client.ts` e `sse-parser.ts` | **SSE entre a API e o mentor, um evento por rascunho** (`draft`, `rejected`, `done`, `error`). O provedor é chamado **sem `stream`** (`stream: false`): o streaming do provedor está **adiado** e documentado no [ADR-010](docs/adrs/adr-010-ia-opcional-na-geracao-de-rascunhos.md), item 13. |
 
 ## 📋 Documentação de Atividades
 

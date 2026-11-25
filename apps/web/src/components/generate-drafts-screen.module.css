@@ -51,11 +51,11 @@
 .validated { color: var(--sf-green); font-weight: 700; }
 .statement { margin: 12px 0; font-weight: 700; }
 .alternatives { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.alternative, .correct { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; border: 1px solid var(--sf-band); border-radius: 8px; padding: 8px 12px; }
+.alternative, .correct { display: flex; gap: 8px; align-items: baseline; border: 1px solid var(--sf-band); border-radius: 8px; padding: 8px 12px; }
 .correct { background: var(--sf-mint); border-color: var(--sf-mint); }
-.letter { font-weight: 700; }
-.altText { flex: 1 1 auto; }
-.correctBadge { margin-left: auto; font-size: 14px; color: var(--sf-text); border: 1px solid var(--sf-text); border-radius: 6px; padding: 0 8px; }
+.letter { font-weight: 700; flex: 0 0 1.75em; }
+.altText { flex: 1 1 0; min-width: 0; overflow-wrap: break-word; }
+.correctBadge { margin-left: auto; flex: none; font-size: 14px; color: var(--sf-text); border: 1px solid var(--sf-text); border-radius: 6px; padding: 0 8px; }
 
 .actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
 .edit, .discard, .review { min-height: 44px; padding: 0 20px; border: 0; border-radius: 8px; font-size: 16px; cursor: not-allowed; }

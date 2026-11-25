@@ -39,10 +39,7 @@ export async function streamGeneration(options: StreamGenerationOptions): Promis
     if (isAbort(error, signal)) {
       return;
     }
-    fail(
-      'NETWORK_ERROR',
-      'Não foi possível conectar ao servidor. Verifique a conexão e tente de novo; não foi possível confirmar se a tentativa contou no limite diário.',
-    );
+    fail('API_UNAVAILABLE', API_UNAVAILABLE_MESSAGE);
     return;
   }
 
@@ -50,6 +47,9 @@ export async function streamGeneration(options: StreamGenerationOptions): Promis
     const parsed = GenerationErrorSchema.safeParse(await readJson(response));
     if (parsed.success) {
       onEvent({ event: 'error', data: parsed.data });
+    } else if (response.status >= 500) {
+      // 5xx sem o JSON da API: quem respondeu foi o proxy do Next (a API não foi alcançada).
+      fail('API_UNAVAILABLE', API_UNAVAILABLE_MESSAGE);
     } else {
       fail(`HTTP_${response.status}`, `O servidor respondeu com erro (HTTP ${response.status}). Tente de novo mais tarde.`);
     }
@@ -57,15 +57,20 @@ export async function streamGeneration(options: StreamGenerationOptions): Promis
   }
 
   if (!response.body) {
-    fail('STREAM_INTERRUPTED', INTERRUPTED_MESSAGE);
+    fail('API_UNAVAILABLE', API_UNAVAILABLE_MESSAGE);
     return;
   }
 
   let finished = false;
+  let received = 0;
   const emit = (event: GenerationEvent) => {
     finished = finished || event.event === 'done' || event.event === 'error';
+    received += 1;
     onEvent(event);
   };
+  // Sem nenhum evento recebido, a API nunca respondeu de fato (nada a dizer sobre cota); depois do primeiro, a cota pode ter sido gasta.
+  const interrupted = () =>
+    received === 0 ? fail('API_UNAVAILABLE', API_UNAVAILABLE_MESSAGE) : fail('STREAM_INTERRUPTED', CONNECTION_DROPPED_MESSAGE);
 
   try {
     await readEvents(response.body.getReader(), emit);
@@ -73,17 +78,19 @@ export async function streamGeneration(options: StreamGenerationOptions): Promis
     if (isAbort(error, signal)) {
       return;
     }
-    fail('STREAM_INTERRUPTED', INTERRUPTED_MESSAGE);
+    interrupted();
     return;
   }
 
   if (!finished) {
-    fail('STREAM_INTERRUPTED', INTERRUPTED_MESSAGE);
+    interrupted();
   }
 }
 
-const INTERRUPTED_MESSAGE =
-  'A conexão foi interrompida antes do fim da geração. Os rascunhos já recebidos continuam na tela; não foi possível confirmar se a tentativa contou no limite diário.';
+const API_UNAVAILABLE_MESSAGE = 'API indisponível. Tente de novo em instantes.';
+
+const CONNECTION_DROPPED_MESSAGE =
+  'A conexão caiu durante a geração. Não foi possível confirmar se a tentativa contou no limite diário.';
 
 function isAbort(error: unknown, signal?: AbortSignal): boolean {
   return signal?.aborted === true || (error instanceof Error && error.name === 'AbortError');
